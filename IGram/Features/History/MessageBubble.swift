@@ -88,7 +88,7 @@ struct MessageBubble: View {
         case .messageSticker(let value):
             StickerView(sticker: value.sticker)
         case .messageAnimatedEmoji(let value):
-            if let sticker = value.animatedEmoji.sticker, sticker.format == .stickerFormatWebp {
+            if let sticker = value.animatedEmoji.sticker {
                 StickerView(sticker: sticker, side: 120)
             } else {
                 EmojiPlaceholder(emoji: value.emoji, size: 80)
