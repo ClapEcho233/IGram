@@ -21,7 +21,13 @@ final class AppModel {
     let credentials: CredentialsStore
     private(set) var accountIndices: [Int]
     private(set) var sessions: [Int: TelegramSession] = [:]
-    private(set) var activeIndex: Int
+    private(set) var activeIndex: Int {
+        didSet { notifications.activeAccountIndex = activeIndex }
+    }
+    /// A clicked notification waiting for its account's window to open it.
+    var pendingOpen: NotificationController.OpenRequest?
+    /// System notifications and the Dock badge for every account.
+    @ObservationIgnored let notifications = NotificationController()
 
     /// Accounts whose TDLib database is still locked by a closing client.
     @ObservationIgnored private var closingIndices: Set<Int> = []
@@ -40,6 +46,12 @@ final class AppModel {
         let active = defaults.integer(forKey: Key.active)
         accountIndices = indices
         activeIndex = indices.contains(active) ? active : indices[0]
+        notifications.activeAccountIndex = activeIndex
+        notifications.onOpen = { [weak self] request in
+            guard let self, self.accountIndices.contains(request.accountIndex) else { return }
+            self.switchTo(request.accountIndex)
+            self.pendingOpen = request
+        }
         if !Self.isRunningTests {
             accountIndices.forEach(start)
         }
@@ -116,11 +128,13 @@ final class AppModel {
         }
         sessions[index] = session
         session.start()
+        if !Self.isRunningTests { notifications.attach(session) }
         Log.session.info("Started TDLib session for account \(index)")
     }
 
     private func stopAll() {
         for (index, session) in sessions {
+            notifications.detach(accountIndex: index)
             closingIndices.insert(index)
             session.onClosed = { [weak self] in
                 guard let self else { return }
@@ -135,6 +149,7 @@ final class AppModel {
     private func sessionDidClose(_ closed: TelegramSession, index: Int) {
         guard sessions[index] === closed else { return }
         sessions[index] = nil
+        notifications.detach(accountIndex: index)
         if closed.didLogOut, accountIndices.count > 1, accountIndices.contains(index) {
             accountIndices.removeAll { $0 == index }
             if activeIndex == index {

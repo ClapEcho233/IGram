@@ -56,9 +56,9 @@ private struct AccountFooter: View {
                     app.switchTo(account.index)
                 } label: {
                     if account.index == app.activeIndex {
-                        Label(account.session.me.fullName.isEmpty ? String(localized: "Account") : account.session.me.fullName, systemImage: "checkmark")
+                        Label(accountTitle(account.session), systemImage: "checkmark")
                     } else {
-                        Text(account.session.me.fullName.isEmpty ? String(localized: "Account") : account.session.me.fullName)
+                        Text(accountTitle(account.session))
                     }
                 }
             }
@@ -95,6 +95,14 @@ private struct AccountFooter: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
         .background(.bar)
+    }
+
+    /// The account's name, with its unread count when it isn't the one shown.
+    private func accountTitle(_ account: TelegramSession) -> String {
+        let name = account.me.fullName.isEmpty ? String(localized: "Account") : account.me.fullName
+        guard account !== session, account.isAuthorized else { return name }
+        let unread = account.chats.list(.chatListMain).unreadUnmutedMessageCount
+        return unread > 0 ? "\(name) (\(UnreadBadge.format(unread)))" : name
     }
 
     private var connectionText: String {

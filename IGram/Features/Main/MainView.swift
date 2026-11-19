@@ -13,7 +13,7 @@ struct MainView: View {
     @State private var model = MainModel()
     @State private var audioPlayer = AudioPlayer()
     @State private var search = ChatSearchModel()
-    @State private var notifications = NotificationController()
+    @Environment(AppModel.self) private var app
     @State private var navigation: ChatNavigation?
     @AppStorage(AppPreferences.badgeIncludesMuted) private var badgeIncludesMuted = false
 
@@ -91,10 +91,14 @@ struct MainView: View {
         .focusedSceneValue(\.chatNavigation, navigation)
         .onAppear {
             navigation = ChatNavigation(session: session, model: model)
-            notifications.attach(session: session, main: model)
+            app.notifications.main = model
+            openPendingNotification()
         }
-        .onDisappear { notifications.detach() }
-        .onChange(of: badgeIncludesMuted) { notifications.updateBadge() }
+        .onDisappear {
+            if app.notifications.main === model { app.notifications.main = nil }
+        }
+        .onChange(of: app.pendingOpen) { openPendingNotification() }
+        .onChange(of: badgeIncludesMuted) { app.notifications.updateBadge() }
         .quickLookPreview($model.quickLookURL)
         .sheet(isPresented: Binding(get: { model.proxyToAdd != nil }, set: { if !$0 { model.proxyToAdd = nil } })) {
             if let draft = model.proxyToAdd {
@@ -108,6 +112,13 @@ struct MainView: View {
         .environment(\.openURL, OpenURLAction { url in
             LinkRouter(session: session, main: model).handle(url)
         })
+    }
+
+    /// Opens the chat of a clicked notification once its account is shown.
+    private func openPendingNotification() {
+        guard let request = app.pendingOpen, request.accountIndex == session.accountIndex else { return }
+        app.pendingOpen = nil
+        model.open(chatId: request.chatId, messageId: request.messageId)
     }
 
     private var navigationTitle: String {
