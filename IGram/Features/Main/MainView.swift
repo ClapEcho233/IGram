@@ -21,7 +21,8 @@ struct MainView: View {
                 .navigationSplitViewColumnWidth(min: 280, ideal: 340, max: 520)
         } detail: {
             if let chatId = model.selectedChatId, let chat = session.chats.chat(chatId) {
-                ContentUnavailableView(session.title(of: chat), systemImage: "bubble.left")
+                ChatView(chat: chat, history: session.history(for: chatId))
+                    .id(chatId)
             } else {
                 ContentUnavailableView(
                     "Select a chat to start messaging",
