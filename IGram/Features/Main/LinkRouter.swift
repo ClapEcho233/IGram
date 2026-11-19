@@ -35,7 +35,22 @@ struct LinkRouter {
                 case .username(let username):
                     let chat = try await session.api.searchPublicChat(username: username)
                     main.open(chatId: chat.id)
-                case .hashtag, .botCommand:
+                case .botCommand(let command):
+                    // Clicking a command sends it to the open chat, as tdesktop does.
+                    guard let chatId = main.selectedChatId else { return }
+                    _ = try await session.api.sendMessage(
+                        chatId: chatId,
+                        inputMessageContent: .inputMessageText(InputMessageText(
+                            clearDraft: false,
+                            linkPreviewOptions: nil,
+                            text: FormattedText(entities: [], text: command)
+                        )),
+                        options: nil,
+                        replyMarkup: nil,
+                        replyTo: nil,
+                        topicId: nil
+                    )
+                case .hashtag:
                     break
                 }
             } catch {

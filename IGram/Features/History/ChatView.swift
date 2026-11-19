@@ -15,11 +15,16 @@ struct ChatView: View {
     @Environment(TelegramSession.self) private var session
     @Environment(MainModel.self) private var main
     @State private var unreadAnchor: Int64?
+    @State private var composer: ComposerModel?
 
     var body: some View {
         VStack(spacing: 0) {
             HistoryView(chat: chat, history: history, unreadAnchor: unreadAnchor)
+            if let composer {
+                ComposerView(chat: chat, model: composer, history: history)
+            }
         }
+        .environment(composer)
         .navigationTitle(session.title(of: chat))
         .navigationSubtitle(session.subtitle(for: chat))
         .toolbar {
@@ -28,6 +33,7 @@ struct ChatView: View {
             }
         }
         .task(id: chat.id) {
+            if composer == nil { composer = ComposerModel(chat: chat, session: session) }
             unreadAnchor = chat.unreadCount > 0 ? chat.lastReadInboxMessageId : nil
             await history.open(unreadCount: chat.unreadCount, lastReadInboxMessageId: chat.lastReadInboxMessageId)
             await jumpToPendingMessage()
@@ -35,7 +41,10 @@ struct ChatView: View {
         .onChange(of: main.pendingMessageId) {
             Task { await jumpToPendingMessage() }
         }
-        .onDisappear { history.close() }
+        .onDisappear {
+            history.close()
+            if let composer { Task { await composer.saveDraft() } }
+        }
         .task(id: chat.userId) {
             // Keep presence and profile details fresh while the chat is open.
             if let userId = chat.userId {
