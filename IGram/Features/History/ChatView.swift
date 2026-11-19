@@ -21,9 +21,13 @@ struct ChatView: View {
     @State private var isPickingFiles = false
     @State private var isDropTargeted = false
     @State private var messageActions = MessageActionsModel()
+    @State private var inChatSearch = InChatSearchModel()
 
     var body: some View {
         VStack(spacing: 0) {
+            if inChatSearch.isActive {
+                InChatSearchBar(model: inChatSearch, history: history)
+            }
             HistoryView(chat: chat, history: history, unreadAnchor: unreadAnchor)
             if let composer {
                 ComposerView(
@@ -73,6 +77,15 @@ struct ChatView: View {
         .toolbar {
             ToolbarItem(placement: .navigation) {
                 AvatarView(content: .chat(chat, myUserId: session.myUserId), size: 28)
+            }
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    if inChatSearch.isActive { inChatSearch.close() } else { inChatSearch.isActive = true }
+                } label: {
+                    Label("Search in Chat", systemImage: "magnifyingglass")
+                }
+                .help("Search in this chat")
+                .keyboardShortcut("f", modifiers: [.command])
             }
             ToolbarItem(placement: .primaryAction) {
                 Button {
