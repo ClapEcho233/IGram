@@ -34,6 +34,11 @@ final class TelegramSession {
     @ObservationIgnored var onClosed: (() -> Void)?
     @ObservationIgnored private var updatesTask: Task<Void, Never>?
     @ObservationIgnored private var didRequestClose = false
+    @ObservationIgnored private var histories: [Int64: WeakHistory] = [:]
+
+    private struct WeakHistory {
+        weak var model: HistoryModel?
+    }
 
     var api: TDLibClient { client.api }
 
@@ -80,9 +85,21 @@ final class TelegramSession {
         }
     }
 
+    /// The history model for a chat, shared while any view keeps it alive.
+    func history(for chatId: Int64) -> HistoryModel {
+        if let model = histories[chatId]?.model { return model }
+        let model = HistoryModel(chatId: chatId, client: client)
+        histories = histories.filter { $0.value.model != nil }
+        histories[chatId] = WeakHistory(model: model)
+        return model
+    }
+
     // MARK: - Update routing
 
     func handle(_ update: Update) {
+        if let chatId = update.messageChatId {
+            histories[chatId]?.model?.handle(update)
+        }
         switch update {
         case .updateAuthorizationState(let value):
             handleAuthorizationState(value.authorizationState)
