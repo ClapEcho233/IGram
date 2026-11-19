@@ -150,6 +150,18 @@ struct MessageBubble: View {
             paddedBlock(caption: value.caption) {
                 VoiceNoteView(message: message, voiceNote: value.voiceNote, isListened: value.isListened, isOutgoingStyle: isOutgoingStyle)
             }
+        case .messageLocation(let value):
+            paddedBlock { LocationView(location: value.location) }
+        case .messageLiveLocation(let value):
+            paddedBlock { LocationView(location: value.location.location) }
+        case .messageVenue(let value):
+            paddedBlock { LocationView(location: value.venue.location, venue: value.venue) }
+        case .messageContact(let value):
+            paddedBlock { ContactView(contact: value.contact, isOutgoingStyle: isOutgoingStyle) }
+        case .messagePoll(let value):
+            paddedBlock { PollView(message: message, poll: value.poll, isOutgoingStyle: isOutgoingStyle) }
+        case .messageCall(let value):
+            paddedBlock { CallView(call: value, isOutgoing: message.isOutgoing, isOutgoingStyle: isOutgoingStyle) }
         default:
             fallbackBlock
         }
