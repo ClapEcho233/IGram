@@ -17,7 +17,13 @@ final class MainModel {
     }
 
     var sidebarSelection: SidebarItem? = .allChats
-    var selectedChatId: Int64?
+    var selectedChatId: Int64? {
+        didSet {
+            if selectedChatId != oldValue { selectedTopic = nil }
+        }
+    }
+    /// The open forum topic of the selected chat, if it's a forum.
+    var selectedTopic: ForumTopicInfo?
     var isInfoPresented = false
     /// A message to scroll to once its chat is open, e.g. from search results.
     var pendingMessageId: Int64?

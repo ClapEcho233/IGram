@@ -41,6 +41,8 @@ final class ChatItem: Identifiable {
     fileprivate(set) var blockList: BlockList?
     fileprivate(set) var onlineMemberCount = 0
     fileprivate(set) var hasScheduledMessages: Bool
+    /// Forums shown as a list of topics rather than one message stream.
+    fileprivate(set) var viewAsTopics: Bool
     /// The message whose reply keyboard is shown under the composer (bots).
     fileprivate(set) var replyMarkupMessageId: Int64
     fileprivate(set) var replyMarkupMessage: Message?
@@ -78,6 +80,7 @@ final class ChatItem: Identifiable {
         blockList = chat.blockList
         replyMarkupMessageId = chat.replyMarkupMessageId
         hasScheduledMessages = chat.hasScheduledMessages
+        viewAsTopics = chat.viewAsTopics
         canBeDeletedForAllUsers = chat.canBeDeletedForAllUsers
         canBeDeletedOnlyForSelf = chat.canBeDeletedOnlyForSelf
     }
@@ -251,6 +254,8 @@ final class ChatStore {
             items[value.chatId]?.actionBar = value.actionBar
         case .updateChatBlockList(let value):
             items[value.chatId]?.blockList = value.blockList
+        case .updateChatViewAsTopics(let value):
+            items[value.chatId]?.viewAsTopics = value.viewAsTopics
         case .updateChatHasScheduledMessages(let value):
             items[value.chatId]?.hasScheduledMessages = value.hasScheduledMessages
         case .updateChatReplyMarkup(let value):

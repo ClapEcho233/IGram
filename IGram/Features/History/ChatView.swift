@@ -12,6 +12,8 @@ import UniformTypeIdentifiers
 struct ChatView: View {
     let chat: ChatItem
     let history: HistoryModel
+    /// The forum topic shown, if this is a topic of a forum.
+    var topic: ForumTopicInfo?
 
     @Environment(TelegramSession.self) private var session
     @Environment(MainModel.self) private var main
@@ -29,7 +31,7 @@ struct ChatView: View {
         VStack(spacing: 0) {
             if inChatSearch.isActive {
                 InChatSearchBar(model: inChatSearch, history: history)
-            } else if let pinned {
+            } else if let pinned, topic == nil {
                 PinnedMessageBar(model: pinned, history: history)
             }
             HistoryView(chat: chat, history: history, unreadAnchor: unreadAnchor)
@@ -81,11 +83,28 @@ struct ChatView: View {
                 SendFilesSheet(batch: batch, composer: composer)
             }
         }
-        .navigationTitle(session.title(of: chat))
-        .navigationSubtitle(session.subtitle(for: chat))
+        .navigationTitle(topic?.name ?? session.title(of: chat))
+        .navigationSubtitle(topic == nil ? session.subtitle(for: chat) : session.title(of: chat))
         .toolbar {
             ToolbarItem(placement: .navigation) {
-                AvatarView(content: .chat(chat, myUserId: session.myUserId), size: 28)
+                if let topic {
+                    Button {
+                        main.selectedTopic = nil
+                    } label: {
+                        Label("All Topics", systemImage: "chevron.backward")
+                    }
+                    .help("Back to all topics")
+                    ForumTopicIconView(info: topic).frame(width: 24, height: 24)
+                } else {
+                    AvatarView(content: .chat(chat, myUserId: session.myUserId), size: 28)
+                }
+            }
+            if topic == nil, session.isForum(chat) {
+                ToolbarItem(placement: .primaryAction) {
+                    Button("View as Topics", systemImage: "rectangle.3.group.bubble") {
+                        Task { try? await session.api.toggleChatViewAsTopics(chatId: chat.id, viewAsTopics: true) }
+                    }
+                }
             }
             if chat.hasScheduledMessages {
                 ToolbarItem(placement: .primaryAction) {
@@ -121,7 +140,7 @@ struct ChatView: View {
                 .inspectorColumnWidth(min: 260, ideal: 300, max: 400)
         }
         .task(id: chat.id) {
-            if composer == nil { composer = ComposerModel(chat: chat, session: session) }
+            if composer == nil { composer = ComposerModel(chat: chat, session: session, topicId: topic?.forumTopicId) }
             unreadAnchor = chat.unreadCount > 0 ? chat.lastReadInboxMessageId : nil
             await history.open(unreadCount: chat.unreadCount, lastReadInboxMessageId: chat.lastReadInboxMessageId)
             await jumpToPendingMessage()

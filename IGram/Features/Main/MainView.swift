@@ -50,8 +50,18 @@ struct MainView: View {
                 .navigationSplitViewColumnWidth(min: 280, ideal: 340, max: 520)
         } detail: {
             if let chatId = model.selectedChatId, let chat = session.chats.chat(chatId) {
-                ChatView(chat: chat, history: session.history(for: chatId))
-                    .id(chatId)
+                if session.showsTopics(chat) {
+                    if let topic = model.selectedTopic {
+                        ChatView(chat: chat, history: session.history(for: chatId, topicId: topic.forumTopicId), topic: topic)
+                            .id("\(chatId)-\(topic.forumTopicId)")
+                    } else {
+                        ForumTopicsView(chat: chat)
+                            .id(chatId)
+                    }
+                } else {
+                    ChatView(chat: chat, history: session.history(for: chatId))
+                        .id(chatId)
+                }
             } else {
                 ContentUnavailableView(
                     "Select a chat to start messaging",
