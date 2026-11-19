@@ -9,6 +9,7 @@ import SwiftUI
 /// The login flow. Each TDLib authorization state maps to one step.
 struct IntroView: View {
     @Environment(TelegramSession.self) private var session
+    @Environment(AppModel.self) private var app
     @State private var model: IntroModel?
 
     var body: some View {
@@ -23,6 +24,14 @@ struct IntroView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .overlay(alignment: .topLeading) {
+            // Adding another account can be abandoned, returning to the others.
+            if app.accountIndices.count > 1 {
+                Button("Cancel") { app.cancelAddingAccount() }
+                    .keyboardShortcut(.cancelAction)
+                    .padding(16)
+            }
+        }
         .animation(.smooth, value: stepID)
         .onAppear {
             if model == nil { model = IntroModel(session: session) }

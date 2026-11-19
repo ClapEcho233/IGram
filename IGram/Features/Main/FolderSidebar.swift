@@ -42,13 +42,35 @@ struct FolderSidebar: View {
     }
 }
 
-/// The signed-in account at the bottom of the sidebar, opening Settings.
+/// The signed-in account at the bottom of the sidebar, with tdesktop's
+/// account switcher, Add Account and Settings.
 private struct AccountFooter: View {
     @Environment(TelegramSession.self) private var session
+    @Environment(AppModel.self) private var app
 
     var body: some View {
         let me = session.me
-        SettingsLink {
+        Menu {
+            ForEach(app.accounts, id: \.index) { account in
+                Button {
+                    app.switchTo(account.index)
+                } label: {
+                    if account.index == app.activeIndex {
+                        Label(account.session.me.fullName.isEmpty ? String(localized: "Account") : account.session.me.fullName, systemImage: "checkmark")
+                    } else {
+                        Text(account.session.me.fullName.isEmpty ? String(localized: "Account") : account.session.me.fullName)
+                    }
+                }
+            }
+            if app.canAddAccount {
+                Divider()
+                Button("Add Account", systemImage: "person.badge.plus") { app.addAccount() }
+            }
+            Divider()
+            SettingsLink {
+                Label("Settings…", systemImage: "gearshape")
+            }
+        } label: {
             HStack(spacing: 8) {
                 AvatarView(content: .user(me.user), size: 28)
                 VStack(alignment: .leading, spacing: 0) {
@@ -61,12 +83,15 @@ private struct AccountFooter: View {
                         .lineLimit(1)
                 }
                 Spacer(minLength: 0)
-                Image(systemName: "gearshape")
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.caption)
                     .foregroundStyle(.secondary)
             }
             .contentShape(.rect)
         }
+        .menuStyle(.button)
         .buttonStyle(.plain)
+        .menuIndicator(.hidden)
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
         .background(.bar)
