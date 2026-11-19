@@ -86,6 +86,11 @@ final class PeerStore {
 
     func secretChat(_ id: Int) -> SecretChat? { secretChats[id] }
 
+    /// Stores full info returned by a request (TDLib only pushes later changes).
+    func store(_ info: UserFullInfo, userId: Int64) { user(userId).apply(fullInfo: info) }
+    func store(_ info: BasicGroupFullInfo, basicGroupId: Int64) { basicGroup(basicGroupId).apply(fullInfo: info) }
+    func store(_ info: SupergroupFullInfo, supergroupId: Int64) { supergroup(supergroupId).apply(fullInfo: info) }
+
     /// Applies peer-related updates. Returns `true` when the update was consumed.
     @discardableResult
     func handle(_ update: Update) -> Bool {

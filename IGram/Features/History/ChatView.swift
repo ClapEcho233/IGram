@@ -88,11 +88,9 @@ struct ChatView: View {
             history.close()
             if let composer { Task { await composer.saveDraft() } }
         }
-        .task(id: chat.userId) {
-            // Keep presence and profile details fresh while the chat is open.
-            if let userId = chat.userId {
-                _ = try? await session.api.getUserFullInfo(userId: userId)
-            }
+        .task(id: chat.id) {
+            // Load the profile used by the header subtitle and the info panel.
+            await session.loadFullInfo(for: chat)
         }
     }
 
