@@ -4,9 +4,10 @@
 //
 
 import SwiftUI
+import UniformTypeIdentifiers
 @preconcurrency import TDLibKit
 
-/// An open chat: header, history and (later) the composer.
+/// An open chat: header, history and composer, accepting dropped files.
 /// Corresponds to tdesktop's `HistoryWidget`.
 struct ChatView: View {
     let chat: ChatItem
@@ -16,15 +17,54 @@ struct ChatView: View {
     @Environment(MainModel.self) private var main
     @State private var unreadAnchor: Int64?
     @State private var composer: ComposerModel?
+    @State private var attachments: AttachmentBatch?
+    @State private var isPickingFiles = false
+    @State private var isDropTargeted = false
 
     var body: some View {
         VStack(spacing: 0) {
             HistoryView(chat: chat, history: history, unreadAnchor: unreadAnchor)
             if let composer {
-                ComposerView(chat: chat, model: composer, history: history)
+                ComposerView(
+                    chat: chat,
+                    model: composer,
+                    history: history,
+                    onAttachFiles: { urls in
+                        attach(urls)
+                        return true
+                    },
+                    onAttachButton: { isPickingFiles = true }
+                )
             }
         }
         .environment(composer)
+        .fileImporter(isPresented: $isPickingFiles, allowedContentTypes: [.item], allowsMultipleSelection: true) { result in
+            if case .success(let urls) = result { attach(urls) }
+        }
+        .dropDestination(for: URL.self) { urls, _ in
+            guard canSend else { return false }
+            attach(urls)
+            return true
+        } isTargeted: { isDropTargeted = $0 }
+        .overlay {
+            if isDropTargeted, canSend {
+                RoundedRectangle(cornerRadius: 12)
+                    .strokeBorder(.tint, style: StrokeStyle(lineWidth: 3, dash: [10, 6]))
+                    .background(.tint.opacity(0.08), in: .rect(cornerRadius: 12))
+                    .overlay {
+                        Label("Drop files here to send them", systemImage: "square.and.arrow.down")
+                            .font(.title3.weight(.semibold))
+                            .foregroundStyle(.tint)
+                    }
+                    .padding(12)
+                    .allowsHitTesting(false)
+            }
+        }
+        .sheet(item: $attachments) { batch in
+            if let composer {
+                SendFilesSheet(batch: batch, composer: composer)
+            }
+        }
         .navigationTitle(session.title(of: chat))
         .navigationSubtitle(session.subtitle(for: chat))
         .toolbar {
@@ -50,6 +90,18 @@ struct ChatView: View {
             if let userId = chat.userId {
                 _ = try? await session.api.getUserFullInfo(userId: userId)
             }
+        }
+    }
+
+    private var canSend: Bool {
+        session.composerAvailability(for: chat) == .canSend
+    }
+
+    private func attach(_ urls: [URL]) {
+        guard !urls.isEmpty, canSend else { return }
+        Task {
+            let items = await AttachmentPreparer.prepare(urls)
+            if !items.isEmpty { attachments = AttachmentBatch(items: items) }
         }
     }
 
