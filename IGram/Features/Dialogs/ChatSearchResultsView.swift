@@ -84,7 +84,7 @@ struct ChatSearchResultsView: View {
                 }
             }
         }
-        .listStyle(.inset)
+        .listStyle(.sidebar)
         .onChange(of: selection) { _, result in
             switch result {
             case .chat(let chatId):

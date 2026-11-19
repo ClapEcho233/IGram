@@ -62,7 +62,7 @@ xcodebuild -project IGram.xcodeproj -scheme IGram -destination 'platform=macOS' 
 - Login: phone number with country detection, code (every delivery type, resend
   countdown), two-step verification password with recovery, sign-up, login
   email, and QR code login
-- Chat list: folders in the sidebar, archive, pinned chats, unread, mention and
+- Chat list: Messages-style sidebar with folder tabs above it, archive, pinned chats, unread, mention and
   reaction badges, delivery checks, drafts and typing status, paging, plus a
   context menu to pin, mute, archive, mark read or unread, delete or leave
 - History: Messages-style blue and gray bubbles with tails on the window

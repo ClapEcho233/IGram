@@ -41,7 +41,7 @@ struct ChatListView: View {
                         }
                 }
             }
-            .listStyle(.inset)
+            .listStyle(.sidebar)
             .overlay {
                 if list.isComplete, chats.isEmpty {
                     ContentUnavailableView(emptyTitle, systemImage: "bubble.left.and.bubble.right")

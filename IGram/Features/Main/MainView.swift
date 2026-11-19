@@ -7,7 +7,7 @@ import QuickLook
 import SwiftUI
 @preconcurrency import TDLibKit
 
-/// The signed-in main window: folders, chat list and the open chat.
+/// The signed-in main window: the chat list with folder tabs, and the open chat.
 struct MainView: View {
     @Environment(TelegramSession.self) private var session
     @State private var model = MainModel()
@@ -19,9 +19,6 @@ struct MainView: View {
 
     var body: some View {
         NavigationSplitView {
-            FolderSidebar(model: model)
-                .navigationSplitViewColumnWidth(min: 170, ideal: 200, max: 280)
-        } content: {
             Group {
                 if model.searchText.isEmpty {
                     ChatListView(chatList: model.chatList, selection: $model.selectedChatId)
@@ -29,10 +26,20 @@ struct MainView: View {
                     ChatSearchResultsView(model: search)
                 }
             }
-            // Messages keeps its search field at the top of the conversation list.
+            // Messages keeps its search field at the top of the conversation
+            // list; folders sit right below it as tabs.
             .safeAreaInset(edge: .top, spacing: 0) {
-                ChatListSearchField(text: $model.searchText)
+                VStack(spacing: 0) {
+                    ChatListSearchField(text: $model.searchText)
+                    if model.searchText.isEmpty {
+                        FolderBar(model: model)
+                    }
+                }
             }
+            .safeAreaBar(edge: .bottom, spacing: 0) {
+                AccountFooter()
+            }
+            .scrollEdgeEffectStyle(.hard, for: .bottom)
             .toolbar {
                 ToolbarItem {
                     Menu {
@@ -50,7 +57,7 @@ struct MainView: View {
             }
             .task(id: model.searchText) { await search.search(model.searchText, api: session.api) }
             .navigationTitle(navigationTitle)
-                .navigationSplitViewColumnWidth(min: 280, ideal: 340, max: 520)
+            .navigationSplitViewColumnWidth(min: 280, ideal: 340, max: 480)
         } detail: {
             if let chatId = model.selectedChatId, let chat = session.chats.chat(chatId) {
                 if session.showsTopics(chat) {
@@ -70,11 +77,11 @@ struct MainView: View {
                     "Select a chat to start messaging",
                     systemImage: "bubble.left.and.bubble.right"
                 )
-                // Gives the empty detail column its own toolbar section so the
-                // chat list's compose button stays above the list.
-                .toolbar { ToolbarSpacer(.flexible) }
             }
         }
+        // The open chat shows its own centered header; the system title would
+        // repeat it at the leading edge. The window keeps its title for menus.
+        .toolbar(removing: .title)
         .overlay(alignment: .top) {
             if let toast = model.toast {
                 Text(toast.text)
