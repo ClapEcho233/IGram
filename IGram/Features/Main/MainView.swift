@@ -14,6 +14,7 @@ struct MainView: View {
     @State private var audioPlayer = AudioPlayer()
     @State private var search = ChatSearchModel()
     @State private var notifications = NotificationController()
+    @State private var navigation: ChatNavigation?
     @AppStorage(AppPreferences.badgeIncludesMuted) private var badgeIncludesMuted = false
 
     var body: some View {
@@ -45,7 +46,11 @@ struct MainView: View {
         }
         .environment(model)
         .environment(audioPlayer)
-        .onAppear { notifications.attach(session: session, main: model) }
+        .focusedSceneValue(\.chatNavigation, navigation)
+        .onAppear {
+            navigation = ChatNavigation(session: session, model: model)
+            notifications.attach(session: session, main: model)
+        }
         .onDisappear { notifications.detach() }
         .onChange(of: badgeIncludesMuted) { notifications.updateBadge() }
         .quickLookPreview($model.quickLookURL)

@@ -21,6 +21,9 @@ struct IGramApp: App {
         }
         .defaultSize(width: 1120, height: 740)
         .windowToolbarStyle(.unified)
+        .commands {
+            ChatCommands()
+        }
 
         Settings {
             SettingsView()
