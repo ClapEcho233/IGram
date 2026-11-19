@@ -30,6 +30,21 @@ struct MainView: View {
                 }
             }
             .searchable(text: $model.searchText, placement: .toolbar, prompt: Text("Search"))
+            .toolbar {
+                ToolbarItem {
+                    Menu {
+                        Button("New Message", systemImage: "square.and.pencil") { model.newChat = .message }
+                        Button("New Group", systemImage: "person.2") { model.newChat = .group }
+                        Button("New Channel", systemImage: "megaphone") { model.newChat = .channel }
+                        Button("New Secret Chat", systemImage: "lock") { model.newChat = .secretChat }
+                        Divider()
+                        Button("Add Contact", systemImage: "person.badge.plus") { model.newChat = .contact }
+                    } label: {
+                        Label("New", systemImage: "square.and.pencil")
+                    }
+                    .help("New message, group or channel")
+                }
+            }
             .task(id: model.searchText) { await search.search(model.searchText, api: session.api) }
             .navigationTitle(navigationTitle)
                 .navigationSplitViewColumnWidth(min: 280, ideal: 340, max: 520)
@@ -71,6 +86,10 @@ struct MainView: View {
         .onDisappear { notifications.detach() }
         .onChange(of: badgeIncludesMuted) { notifications.updateBadge() }
         .quickLookPreview($model.quickLookURL)
+        .sheet(item: $model.newChat) { kind in
+            NewChatSheet(kind: kind)
+                .environment(model)
+        }
         .environment(\.openURL, OpenURLAction { url in
             LinkRouter(session: session, main: model).handle(url)
         })

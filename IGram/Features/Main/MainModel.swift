@@ -25,6 +25,8 @@ final class MainModel {
     var quickLookURL: URL?
     /// Text of the global search field above the chat list.
     var searchText = ""
+    /// The chat creation sheet being shown.
+    var newChat: NewChatKind?
     /// A short message shown over the window, like tdesktop's `Ui::Toast`.
     private(set) var toast: Toast?
 

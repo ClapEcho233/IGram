@@ -64,6 +64,8 @@ final class ChatNavigation {
     }
 
     func closeChat() { model.selectedChatId = nil }
+
+    func startNewChat(_ kind: NewChatKind) { model.newChat = kind }
 }
 
 extension FocusedValues {
@@ -75,6 +77,18 @@ struct ChatCommands: Commands {
     @FocusedValue(\.chatNavigation) private var navigation
 
     var body: some Commands {
+        CommandGroup(replacing: .newItem) {
+            Button("New Message") { navigation?.startNewChat(.message) }
+                .keyboardShortcut("n", modifiers: .command)
+                .disabled(navigation == nil)
+            Button("New Group") { navigation?.startNewChat(.group) }
+                .keyboardShortcut("n", modifiers: [.command, .shift])
+                .disabled(navigation == nil)
+            Button("New Channel") { navigation?.startNewChat(.channel) }
+                .disabled(navigation == nil)
+            Button("New Secret Chat") { navigation?.startNewChat(.secretChat) }
+                .disabled(navigation == nil)
+        }
         CommandMenu("Chats") {
             Button("Next Chat") { navigation?.selectAdjacentChat(1) }
                 .keyboardShortcut(.downArrow, modifiers: [.command, .option])
