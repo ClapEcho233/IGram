@@ -72,7 +72,13 @@ struct PhoneNumberStepView: View {
             try? await Task.sleep(for: .milliseconds(200))
             guard !Task.isCancelled else { return }
             let info = await model.phoneNumberInfo(for: phoneNumber)
-            matchedCountry = info?.country ?? matchedCountry
+            if let country = info?.country,
+               let code = info?.countryCallingCode,
+               matchedCountry?.callingCodes.contains(code) != true {
+                // Several countries share calling codes (+1, +7); keep the
+                // user's or IP-detected choice unless the code changed.
+                matchedCountry = country
+            }
             if let info, !info.formattedPhoneNumber.isEmpty {
                 formattedNumber = "+\(info.countryCallingCode) \(info.formattedPhoneNumber)"
             } else {
