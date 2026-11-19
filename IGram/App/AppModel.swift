@@ -16,6 +16,8 @@ import OSLog
 final class AppModel {
     let credentials: CredentialsStore
     private(set) var session: TelegramSession?
+    /// A session asked to close whose database is still locked by TDLib.
+    @ObservationIgnored private var closingSession: TelegramSession?
 
     init(credentials: CredentialsStore = CredentialsStore()) {
         self.credentials = credentials
@@ -42,7 +44,8 @@ final class AppModel {
     }
 
     private func startSessionIfPossible() {
-        guard session == nil, let credentials = credentials.credentials else { return }
+        // TDLib locks its database; a new client must wait for the old one to close.
+        guard session == nil, closingSession == nil, let credentials = credentials.credentials else { return }
         let session = TelegramSession(credentials: credentials)
         session.onClosed = { [weak self, weak session] in
             guard let self, let session else { return }
@@ -60,7 +63,11 @@ final class AppModel {
 
     private func stopSession() {
         guard let session else { return }
-        session.onClosed = nil
+        closingSession = session
+        session.onClosed = { [weak self] in
+            self?.closingSession = nil
+            self?.startSessionIfPossible()
+        }
         session.close()
         self.session = nil
     }
