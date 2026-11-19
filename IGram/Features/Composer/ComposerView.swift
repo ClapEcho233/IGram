@@ -20,6 +20,7 @@ struct ComposerView: View {
     @State private var keyboardMessage: Message?
     @State private var isKeyboardVisible = true
     @State private var isScheduling = false
+    @State private var voice = VoiceRecordingModel()
     @State private var scheduleDate = Date.now
 
     var body: some View {
@@ -43,6 +44,7 @@ struct ComposerView: View {
             }
         }
         .background(.bar)
+        .onDisappear { voice.cancel() }
         .sheet(isPresented: $isScheduling) {
             ScheduleSheet(date: $scheduleDate, title: session.isSavedMessages(chat) ? String(localized: "Set a Reminder") : String(localized: "Schedule Message")) {
                 model.submit(options: .init(scheduleDate: scheduleDate))
@@ -90,17 +92,21 @@ struct ComposerView: View {
                 .foregroundStyle(.secondary)
                 .help("Attach files")
 
-                ComposerTextView(
-                    text: $model.text,
-                    placeholder: placeholder,
-                    focusRequest: model.focusRequest,
-                    onSubmit: { model.submit() },
-                    onEditLast: editLastMessage,
-                    onCancel: { model.cancelMode() },
-                    onPasteFiles: onAttachFiles,
-                    height: $fieldHeight
-                )
-                .frame(height: fieldHeight)
+                if voice.isRecording {
+                    VoiceRecordingBar(model: voice) { voice.cancel() }
+                } else {
+                    ComposerTextView(
+                        text: $model.text,
+                        placeholder: placeholder,
+                        focusRequest: model.focusRequest,
+                        onSubmit: { model.submit() },
+                        onEditLast: editLastMessage,
+                        onCancel: { model.cancelMode() },
+                        onPasteFiles: onAttachFiles,
+                        height: $fieldHeight
+                    )
+                    .frame(height: fieldHeight)
+                }
 
                 if case .replyMarkupShowKeyboard = keyboardMessage?.replyMarkup {
                     Button {
@@ -115,35 +121,86 @@ struct ComposerView: View {
                     .help(isKeyboardVisible ? "Hide bot keyboard" : "Show bot keyboard")
                 }
 
-                Button { model.submit() } label: {
-                    Image(systemName: isEditing ? "checkmark.circle.fill" : "arrow.up.circle.fill")
-                        .font(.system(size: 26))
-                        .symbolRenderingMode(.hierarchical)
-                }
-                .buttonStyle(.plain)
-                .foregroundStyle(model.canSubmit ? AnyShapeStyle(.tint) : AnyShapeStyle(.tertiary))
-                .disabled(!model.canSubmit)
-                .help(isEditing ? "Save" : "Send — right-click for more options")
-                .contextMenu {
-                    if !isEditing {
-                        Button("Send Without Sound", systemImage: "bell.slash") {
-                            model.submit(options: .init(isSilent: true))
+                if showsMicrophone {
+                    Button {
+                        Task {
+                            if let error = await voice.start(chatId: chat.id, api: session.api) {
+                                model.errorMessage = error
+                            }
                         }
-                        Button("Schedule Message…", systemImage: "calendar.badge.clock") {
-                            scheduleDate = Date.now.addingTimeInterval(3600)
-                            isScheduling = true
-                        }
-                        if chat.userId != nil, !session.isSavedMessages(chat) {
-                            Button("Send When Online", systemImage: "person.badge.clock") {
-                                model.submit(options: .init(whenOnline: true))
+                    } label: {
+                        Image(systemName: "mic.circle.fill")
+                            .font(.system(size: 26))
+                            .symbolRenderingMode(.hierarchical)
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.tint)
+                    .help("Record a voice message")
+                } else if voice.isRecording {
+                    Button { sendRecording() } label: {
+                        Image(systemName: "arrow.up.circle.fill")
+                            .font(.system(size: 26))
+                            .symbolRenderingMode(.hierarchical)
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.tint)
+                    .keyboardShortcut(.return, modifiers: [])
+                    .help("Send voice message")
+                } else {
+                    Button { model.submit() } label: {
+                        Image(systemName: isEditing ? "checkmark.circle.fill" : "arrow.up.circle.fill")
+                            .font(.system(size: 26))
+                            .symbolRenderingMode(.hierarchical)
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(model.canSubmit ? AnyShapeStyle(.tint) : AnyShapeStyle(.tertiary))
+                    .disabled(!model.canSubmit)
+                    .help(isEditing ? "Save" : "Send — right-click for more options")
+                    .contextMenu {
+                        if !isEditing {
+                            Button("Send Without Sound", systemImage: "bell.slash") {
+                                model.submit(options: .init(isSilent: true))
+                            }
+                            Button("Schedule Message…", systemImage: "calendar.badge.clock") {
+                                scheduleDate = Date.now.addingTimeInterval(3600)
+                                isScheduling = true
+                            }
+                            if chat.userId != nil, !session.isSavedMessages(chat) {
+                                Button("Send When Online", systemImage: "person.badge.clock") {
+                                    model.submit(options: .init(whenOnline: true))
+                                }
                             }
                         }
                     }
+                    .disabled(!model.canSubmit)
                 }
-                .disabled(!model.canSubmit)
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 8)
+        }
+    }
+
+    /// Like tdesktop, an empty field offers recording instead of sending.
+    private var showsMicrophone: Bool {
+        !voice.isRecording && !isEditing && model.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private func sendRecording() {
+        guard let recorded = voice.finish() else { return }
+        Task {
+            do {
+                try await model.send(.inputMessageVoiceNote(InputMessageVoiceNote(
+                    caption: nil,
+                    selfDestructType: nil,
+                    voiceNote: InputVoiceNote(
+                        duration: recorded.duration,
+                        voiceNote: .inputFileLocal(InputFileLocal(path: recorded.url.path(percentEncoded: false))),
+                        waveform: recorded.waveform
+                    )
+                )))
+            } catch {
+                model.errorMessage = error.telegramMessage
+            }
         }
     }
 
