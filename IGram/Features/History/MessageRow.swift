@@ -68,6 +68,9 @@ struct MessageRow: View {
                         }
                     }
                     MessageBubble(entry: entry, chat: chat, history: history)
+                        .contextMenu {
+                            MessageContextMenu(entry: entry, chat: chat, history: history)
+                        }
                     if !isOutgoingStyle { Spacer(minLength: 64) }
                 }
                 .padding(.top, entry.isFirstInGroup ? 6 : 1)
@@ -85,6 +88,10 @@ struct MessageRow: View {
             for item in entry.messages where !item.isOutgoing {
                 history.markViewed(item.id)
             }
+        }
+        .task(id: entry.id) {
+            guard !message.isService else { return }
+            await history.loadProperties(for: entry.messages.map(\.id))
         }
     }
 }

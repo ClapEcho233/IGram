@@ -28,6 +28,8 @@ final class HistoryModel {
     private(set) var focusRequest: FocusRequest?
     /// Messages that loaded messages reply to, when outside the loaded slice.
     private(set) var replyCache: [Int64: ChatMessage] = [:]
+    /// What the user may do with each message (edit, delete, forward…).
+    private(set) var properties: [Int64: MessageProperties] = [:]
 
     struct FocusRequest: Equatable {
         let messageId: Int64
@@ -231,6 +233,18 @@ final class HistoryModel {
         return messages.lastIndex { $0.id == id }
     }
 
+    // MARK: - Message properties
+
+    /// Loads permissions for context menus. `getMessageProperties` is an
+    /// offline request, so prefetching visible messages is cheap.
+    func loadProperties(for messageIds: [Int64]) async {
+        for id in messageIds where properties[id] == nil {
+            if let value = try? await client.api.getMessageProperties(chatId: chatId, messageId: id) {
+                properties[id] = value
+            }
+        }
+    }
+
     // MARK: - Read state
 
     /// Marks messages as viewed; batched to avoid a request per row.
@@ -275,6 +289,7 @@ final class HistoryModel {
         case .updateMessageContent(let value):
             mutate(value.messageId) { $0.apply(content: value.newContent) }
         case .updateMessageEdited(let value):
+            properties[value.messageId] = nil
             mutate(value.messageId) { $0.apply(editDate: value.editDate) }
         case .updateMessageInteractionInfo(let value):
             mutate(value.messageId) { $0.apply(interactionInfo: value.interactionInfo) }
@@ -304,6 +319,7 @@ final class HistoryModel {
     }
 
     private func replace(_ oldId: Int64, with message: Message) {
+        properties[oldId] = nil
         guard let index = index(of: oldId) else { return }
         messages.remove(at: index)
         messages = Self.merge(messages, [message])

@@ -20,6 +20,7 @@ struct ChatView: View {
     @State private var attachments: AttachmentBatch?
     @State private var isPickingFiles = false
     @State private var isDropTargeted = false
+    @State private var messageActions = MessageActionsModel()
 
     var body: some View {
         VStack(spacing: 0) {
@@ -38,6 +39,8 @@ struct ChatView: View {
             }
         }
         .environment(composer)
+        .environment(messageActions)
+        .messageActionPresentations(messageActions, chat: chat, session: session)
         .fileImporter(isPresented: $isPickingFiles, allowedContentTypes: [.item], allowsMultipleSelection: true) { result in
             if case .success(let urls) = result { attach(urls) }
         }
