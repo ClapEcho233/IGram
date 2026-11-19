@@ -81,9 +81,17 @@ xcodebuild -project IGram.xcodeproj -scheme IGram -destination 'platform=macOS' 
   log out; system notifications and a Dock badge; keyboard shortcuts in the
   Chats menu (⌘0 Saved Messages, ⌘1–9 folders, ⌥⌘↑/↓ to switch chats)
 
+- Also: link previews, pinned-message bar, unread mention/reaction jumps,
+  bot inline and reply keyboards, multi-select, silent and scheduled
+  sending, voice message recording (Ogg Opus), emoji/sticker/GIF panel with
+  animated (Lottie) stickers, @mention and /command autocomplete, new
+  groups/channels/secret chats and contacts, group editing and member
+  management, folder editor, forum topics, privacy and two-step
+  verification, proxies, up to three accounts, and Simplified Chinese
+
 ## Not yet implemented
 
-Voice and video calls, recording voice messages, animated (TGS) and video
-(WebM) sticker playback, the sticker, GIF and emoji panels, forum topics,
-stories, bot keyboards and inline bots, creating groups, channels and secret
-chats, multiple accounts, proxy settings and theme editing.
+Voice and video calls (tdesktop uses tgcalls/WebRTC, which has no Swift
+port), video (WebM) sticker playback, stories, inline bot results other
+than GIFs, web app embedding, chat themes and wallpapers, and
+notifications for accounts other than the active one.
