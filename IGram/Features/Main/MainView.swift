@@ -11,6 +11,7 @@ import SwiftUI
 struct MainView: View {
     @Environment(TelegramSession.self) private var session
     @State private var model = MainModel()
+    @State private var audioPlayer = AudioPlayer()
 
     var body: some View {
         NavigationSplitView {
@@ -32,6 +33,7 @@ struct MainView: View {
             }
         }
         .environment(model)
+        .environment(audioPlayer)
         .quickLookPreview($model.quickLookURL)
         .environment(\.openURL, OpenURLAction { url in
             LinkRouter(session: session, main: model).handle(url)

@@ -138,9 +138,44 @@ struct MessageBubble: View {
             textBlock(value.text)
         case .messagePhoto, .messageVideo, .messageAnimation:
             mediaBlock
+        case .messageDocument(let value):
+            paddedBlock(caption: value.caption) {
+                DocumentView(document: value.document, isOutgoingStyle: isOutgoingStyle)
+            }
+        case .messageAudio(let value):
+            paddedBlock(caption: value.caption) {
+                AudioView(audio: value.audio, isOutgoingStyle: isOutgoingStyle)
+            }
+        case .messageVoiceNote(let value):
+            paddedBlock(caption: value.caption) {
+                VoiceNoteView(message: message, voiceNote: value.voiceNote, isListened: value.isListened, isOutgoingStyle: isOutgoingStyle)
+            }
         default:
             fallbackBlock
         }
+    }
+
+    /// Non-media attachments: padded content, then the caption or a footer line.
+    private func paddedBlock<Content: View>(
+        caption: FormattedText? = nil,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            content()
+                .padding(.horizontal, 10)
+                .padding(.top, hasHeader ? 0 : 8)
+            if let caption, !caption.text.isEmpty {
+                textBlock(caption)
+            } else {
+                HStack {
+                    Spacer(minLength: 0)
+                    MessageFooter(message: entry.captionMessage, chat: chat, isOutgoingStyle: isOutgoingStyle)
+                }
+                .padding(.horizontal, 9)
+                .padding(.bottom, 6)
+            }
+        }
+        .fixedSize(horizontal: true, vertical: false)
     }
 
     /// Photos, videos and GIFs fill the bubble; the caption sits below.
