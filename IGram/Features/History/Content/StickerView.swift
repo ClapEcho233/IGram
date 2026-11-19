@@ -8,8 +8,8 @@ import SwiftUI
 @preconcurrency import TDLibKit
 
 /// A sticker drawn without a bubble. WebP stickers render directly, TGS
-/// stickers play with Lottie, and video (WebM) stickers show their still
-/// thumbnail since AVFoundation cannot decode WebM.
+/// stickers play with Lottie, and video (WebM) stickers play through IGram's
+/// WebM demuxer and VideoToolbox's VP9 decoder.
 struct StickerView: View {
     let sticker: Sticker
     var side: CGFloat = 180
@@ -30,7 +30,7 @@ struct StickerView: View {
             case .stickerFormatTgs:
                 AnimatedStickerView(file: sticker.sticker) { thumbnail }
             case .stickerFormatWebm:
-                thumbnail
+                VideoStickerView(file: sticker.sticker, maxPixelSize: Int(side * 2)) { thumbnail }
             }
         }
         .frame(width: size.width, height: size.height)
