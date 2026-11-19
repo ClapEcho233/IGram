@@ -75,6 +75,8 @@ final class ComposerModel {
     private(set) var focusRequest = 0
     /// Text to insert at the cursor (emoji from the panel), applied by the text view.
     private(set) var insertion: (text: String, token: Int)?
+    /// Names inserted from mention suggestions for users without a username.
+    @ObservationIgnored private var mentionNames: [String: Int64] = [:]
 
     @ObservationIgnored private let session: TelegramSession
     @ObservationIgnored private var lastTypingSent: Date = .distantPast
@@ -142,6 +144,15 @@ final class ComposerModel {
     }
 
     func focus() { focusRequest += 1 }
+
+    /// Replaces the last `length` characters, e.g. a half-typed `@na` with a mention.
+    func replaceSuffix(length: Int, with replacement: String, mentionUserId: Int64?) {
+        text = String(text.dropLast(length)) + replacement
+        if let mentionUserId {
+            mentionNames[replacement.trimmingCharacters(in: .whitespaces)] = mentionUserId
+        }
+        focus()
+    }
 
     func insert(_ string: String) {
         insertion = (string, (insertion?.token ?? 0) + 1)
@@ -259,7 +270,25 @@ final class ComposerModel {
     /// with TDLib, the same shortcuts tdesktop accepts.
     func formattedText(from raw: String) async throws -> FormattedText {
         let plain = FormattedText(entities: [], text: raw)
-        return (try? await session.api.parseMarkdown(text: plain)) ?? plain
+        let parsed = (try? await session.api.parseMarkdown(text: plain)) ?? plain
+        let mentions = mentionNames
+        mentionNames = [:]
+        return Self.addingMentions(mentions, to: parsed)
+    }
+
+    /// Adds mention-name entities for names picked from suggestions.
+    static func addingMentions(_ mentions: [String: Int64], to text: FormattedText) -> FormattedText {
+        var entities = text.entities
+        let utf16 = text.text.utf16
+        for (name, userId) in mentions {
+            guard let range = text.text.range(of: name) else { continue }
+            let offset = utf16.distance(from: utf16.startIndex, to: range.lowerBound)
+            let length = name.utf16.count
+            let overlaps = entities.contains { $0.offset < offset + length && offset < $0.offset + $0.length }
+            guard !overlaps else { continue }
+            entities.append(TextEntity(length: length, offset: offset, type: .textEntityTypeMentionName(TextEntityTypeMentionName(userId: userId))))
+        }
+        return FormattedText(entities: entities.sorted { $0.offset < $1.offset }, text: text.text)
     }
 
     // MARK: - Typing and drafts

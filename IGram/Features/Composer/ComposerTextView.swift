@@ -19,6 +19,9 @@ struct ComposerTextView: NSViewRepresentable {
     var maxHeight: CGFloat = 180
     var onSubmit: () -> Void
     var onEditLast: () -> Bool
+    /// Moves through suggestions; returns true when it handled the arrow key.
+    var onArrow: (Int) -> Bool = { _ in false }
+    var onTab: () -> Bool = { false }
     var onCancel: () -> Bool
     var onPasteFiles: ([URL]) -> Bool
     @Binding var height: CGFloat
@@ -114,7 +117,12 @@ struct ComposerTextView: NSViewRepresentable {
                 }
                 return true
             case #selector(NSResponder.moveUp(_:)):
+                if parent.onArrow(-1) { return true }
                 return textView.string.isEmpty && parent.onEditLast()
+            case #selector(NSResponder.moveDown(_:)):
+                return parent.onArrow(1)
+            case #selector(NSResponder.insertTab(_:)):
+                return parent.onTab()
             case #selector(NSResponder.cancelOperation(_:)):
                 return parent.onCancel()
             default:

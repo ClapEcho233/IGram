@@ -23,6 +23,7 @@ struct ComposerView: View {
     @State private var voice = VoiceRecordingModel()
     @State private var stickers = StickerLibrary()
     @State private var isShowingPanel = false
+    @State private var autocomplete = AutocompleteModel()
     @State private var scheduleDate = Date.now
 
     var body: some View {
@@ -47,6 +48,9 @@ struct ComposerView: View {
         }
         .background(.bar)
         .onDisappear { voice.cancel() }
+        .task(id: model.text) {
+            await autocomplete.update(text: model.text, chat: chat, session: session)
+        }
         .sheet(isPresented: $isScheduling) {
             ScheduleSheet(date: $scheduleDate, title: session.isSavedMessages(chat) ? String(localized: "Set a Reminder") : String(localized: "Schedule Message")) {
                 model.submit(options: .init(scheduleDate: scheduleDate))
@@ -78,6 +82,10 @@ struct ComposerView: View {
                     .padding(.horizontal, 14)
                     .padding(.top, 6)
             }
+            if autocomplete.isVisible {
+                AutocompleteList(model: autocomplete) { autocomplete.accept($0, into: model) }
+                Divider()
+            }
             if isKeyboardVisible, let message = keyboardMessage, case .replyMarkupShowKeyboard(let markup) = message.replyMarkup {
                 ReplyKeyboardView(chat: chat, markup: markup, markupMessage: message, composer: model) {
                     isKeyboardVisible = false
@@ -102,8 +110,12 @@ struct ComposerView: View {
                         placeholder: placeholder,
                         focusRequest: model.focusRequest,
                         insertion: model.insertion,
-                        onSubmit: { model.submit() },
+                        onSubmit: {
+                            if !autocomplete.accept(into: model) { model.submit() }
+                        },
                         onEditLast: editLastMessage,
+                        onArrow: { autocomplete.move($0) },
+                        onTab: { autocomplete.accept(into: model) },
                         onCancel: { model.cancelMode() },
                         onPasteFiles: onAttachFiles,
                         height: $fieldHeight
