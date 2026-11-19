@@ -5,6 +5,7 @@
 
 import OSLog
 import SwiftUI
+import UniformTypeIdentifiers
 @preconcurrency import TDLibKit
 
 /// Profile editing, after tdesktop's `Settings::Information`.
@@ -18,6 +19,7 @@ struct AccountSettingsView: View {
     @State private var isSaving = false
     @State private var status: String?
     @State private var didLoad = false
+    @State private var isPickingPhoto = false
 
     var body: some View {
         let me = session.me
@@ -30,6 +32,13 @@ struct AccountSettingsView: View {
                         if let phone = me.user?.phoneNumber, !phone.isEmpty {
                             Text("+\(phone)").foregroundStyle(.secondary).textSelection(.enabled)
                         }
+                        HStack {
+                            Button("Set Photo…") { isPickingPhoto = true }
+                            if let photo = me.user?.profilePhoto {
+                                Button("Remove Photo", role: .destructive) { removePhoto(photo.id) }
+                            }
+                        }
+                        .buttonStyle(.link)
                     }
                 }
             }
@@ -65,6 +74,9 @@ struct AccountSettingsView: View {
             }
         }
         .formStyle(.grouped)
+        .fileImporter(isPresented: $isPickingPhoto, allowedContentTypes: [.image]) { result in
+            if case .success(let url) = result { setPhoto(url) }
+        }
         .task {
             guard !didLoad else { return }
             didLoad = true
@@ -76,6 +88,31 @@ struct AccountSettingsView: View {
             lastName = user?.lastName ?? ""
             username = user?.usernames?.editableUsername ?? ""
             bio = session.me.fullInfo?.bio?.text ?? ""
+        }
+    }
+
+    private func setPhoto(_ url: URL) {
+        Task {
+            guard let copy = await AttachmentPreparer.prepare([url]).first else { return }
+            do {
+                try await session.api.setProfilePhoto(
+                    isPublic: false,
+                    photo: .inputChatPhotoStatic(InputChatPhotoStatic(photo: .inputFileLocal(InputFileLocal(path: copy.url.path(percentEncoded: false)))))
+                )
+                status = String(localized: "Photo updated")
+            } catch {
+                status = error.telegramMessage
+            }
+        }
+    }
+
+    private func removePhoto(_ id: TdInt64) {
+        Task {
+            do {
+                try await session.api.deleteProfilePhoto(profilePhotoId: id)
+            } catch {
+                status = error.telegramMessage
+            }
         }
     }
 
