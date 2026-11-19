@@ -109,6 +109,10 @@ struct MainView: View {
             NewChatSheet(kind: kind)
                 .environment(model)
         }
+        .sheet(item: $model.webApp) { request in
+            WebAppSheet(request: request)
+                .environment(model)
+        }
         .environment(\.openURL, OpenURLAction { url in
             LinkRouter(session: session, main: model).handle(url)
         })

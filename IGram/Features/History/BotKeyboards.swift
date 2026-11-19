@@ -87,11 +87,12 @@ struct InlineKeyboardView: View {
                 if let url = URL(string: login?.url ?? value.url) { openURL(url) }
             }
         case .inlineKeyboardButtonTypeWebApp(let value):
-            Task {
-                guard let botId = message.viaBotUserId != 0 ? message.viaBotUserId : message.senderId.userId else { return }
-                let info = try? await api.openWebApp(botUserId: botId, chatId: chatId, parameters: nil, replyTo: nil, topicId: nil, url: value.url)
-                if let url = URL(string: info?.url.url ?? value.url) { openURL(url) }
-            }
+            guard let botId = message.viaBotUserId != 0 ? message.viaBotUserId : message.senderId.userId else { return }
+            let botName = session.peers.user(botId).fullName
+            main.openWebApp(
+                title: botName.isEmpty ? button.text : botName,
+                launch: .chat(botUserId: botId, chatId: chatId, url: value.url, topicId: composer?.topic)
+            )
         case .inlineKeyboardButtonTypeSwitchInline(let value):
             guard let botId = message.viaBotUserId != 0 ? message.viaBotUserId : message.senderId.userId,
                   let username = session.peers.user(botId).user?.username else { return }
@@ -201,6 +202,14 @@ struct ReplyKeyboardView: View {
             }
         case .keyboardButtonTypeRequestPhoneNumber:
             isConfirmingPhone = true
+        case .keyboardButtonTypeWebApp(let value):
+            guard let botId = markupMessage.senderId.userId ?? chat.userId else { return }
+            let botName = session.peers.user(botId).fullName
+            main.openWebApp(
+                title: botName.isEmpty ? button.text : botName,
+                launch: .simple(botUserId: botId, url: value.url, buttonText: button.text)
+            )
+            if markup.oneTime { onUsed() }
         default:
             main.showToast(String(localized: "This button isn't supported in IGram yet."))
         }

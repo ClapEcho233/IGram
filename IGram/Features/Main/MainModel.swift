@@ -35,8 +35,18 @@ final class MainModel {
     var newChat: NewChatKind?
     /// A proxy from a tg://proxy or t.me/socks link, awaiting confirmation.
     var proxyToAdd: ProxyDraft?
+    /// An embedded Telegram Mini App (Web App) open in a sheet.
+    var webApp: WebAppRequest?
+    /// Text to place into a chat's composer (e.g. from a Mini App inline switch).
+    var pendingComposerText: ComposerDraft?
     /// A short message shown over the window, like tdesktop's `Ui::Toast`.
     private(set) var toast: Toast?
+
+    struct ComposerDraft: Equatable {
+        let id = UUID()
+        let chatId: Int64
+        let text: String
+    }
 
     struct Toast: Identifiable, Equatable {
         let id = UUID()
@@ -63,6 +73,10 @@ final class MainModel {
     func open(chatId: Int64, messageId: Int64? = nil) {
         selectedChatId = chatId
         pendingMessageId = messageId
+    }
+
+    func openWebApp(title: String, launch: WebAppLaunch) {
+        webApp = WebAppRequest(title: title.isEmpty ? String(localized: "Web App") : title, launch: launch)
     }
 }
 

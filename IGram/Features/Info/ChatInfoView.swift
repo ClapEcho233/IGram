@@ -69,6 +69,19 @@ struct ChatInfoView: View {
             Text(session.subtitle(for: chat))
                 .font(.callout)
                 .foregroundStyle(session.isOnline(chat) ? AnyShapeStyle(.tint) : AnyShapeStyle(.secondary))
+            if let userId = chat.userId,
+               case .userTypeBot(let bot) = session.peers.user(userId).user?.type,
+               bot.hasMainWebApp {
+                Button("Open App", systemImage: "app.fill") {
+                    main.openWebApp(
+                        title: session.title(of: chat),
+                        launch: .mainApp(botUserId: userId, chatId: chat.id)
+                    )
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
+                .padding(.top, 4)
+            }
         }
         .frame(maxWidth: .infinity)
     }

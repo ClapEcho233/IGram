@@ -16,6 +16,7 @@ struct ComposerView: View {
     var onAttachButton: () -> Void = {}
 
     @Environment(TelegramSession.self) private var session
+    @Environment(MainModel.self) private var main
     @State private var fieldHeight: CGFloat = 30
     @State private var keyboardMessage: Message?
     @State private var isKeyboardVisible = true
@@ -48,6 +49,12 @@ struct ComposerView: View {
         }
         .background(.bar)
         .onDisappear { voice.cancel() }
+        .onChange(of: main.pendingComposerText) { _, draft in
+            guard let draft, draft.chatId == chat.id else { return }
+            main.pendingComposerText = nil
+            model.text = draft.text
+            model.focus()
+        }
         .task(id: model.text) {
             await autocomplete.update(text: model.text, chat: chat, session: session)
         }
@@ -93,6 +100,32 @@ struct ComposerView: View {
                 Divider()
             }
             HStack(alignment: .bottom, spacing: 8) {
+                if let menu = botMenuButton {
+                    Button {
+                        if let botId = chat.userId {
+                            let title = session.peers.user(botId).fullName
+                            main.openWebApp(
+                                title: title.isEmpty ? menu.text : title,
+                                launch: .chat(botUserId: botId, chatId: chat.id, url: menu.url, topicId: model.topic)
+                            )
+                        }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "app.fill")
+                                .font(.caption)
+                            Text(menu.text)
+                                .font(.callout.weight(.medium))
+                                .lineLimit(1)
+                        }
+                        .padding(.horizontal, 10)
+                        .frame(height: 28)
+                        .foregroundStyle(.white)
+                        .background(.tint, in: .capsule)
+                    }
+                    .buttonStyle(.plain)
+                    .help(menu.text)
+                }
+
                 Button(action: onAttachButton) {
                     Image(systemName: "paperclip")
                         .font(.title3)
@@ -233,6 +266,14 @@ struct ComposerView: View {
                 model.errorMessage = error.telegramMessage
             }
         }
+    }
+
+    /// A bot's custom Web App menu button, shown beside the composer in private bot chats.
+    private var botMenuButton: BotMenuButton? {
+        guard let userId = chat.userId,
+              let menu = session.peers.user(userId).fullInfo?.botInfo?.menuButton,
+              !menu.url.isEmpty else { return nil }
+        return menu
     }
 
     private var isEditing: Bool {
