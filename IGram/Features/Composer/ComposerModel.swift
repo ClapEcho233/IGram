@@ -25,6 +25,42 @@ final class ComposerModel {
         }
     }
 
+    /// How a message is sent, from the send button's menu.
+    nonisolated struct SendOptions: Equatable, Sendable {
+        var isSilent = false
+        var scheduleDate: Date?
+        var whenOnline = false
+
+        static let standard = SendOptions()
+
+        var messageSendOptions: MessageSendOptions? {
+            guard self != .standard else { return nil }
+            let scheduling: MessageSchedulingState? = if whenOnline {
+                .messageSchedulingStateSendWhenOnline
+            } else if let scheduleDate {
+                .messageSchedulingStateSendAtDate(MessageSchedulingStateSendAtDate(
+                    repeatPeriod: 0,
+                    sendDate: Int(scheduleDate.timeIntervalSince1970)
+                ))
+            } else {
+                nil
+            }
+            return MessageSendOptions(
+                allowPaidBroadcast: false,
+                disableNotification: isSilent,
+                effectId: 0,
+                fromBackground: false,
+                onlyPreview: false,
+                paidMessageStarCount: 0,
+                protectContent: false,
+                schedulingState: scheduling,
+                sendingId: 0,
+                suggestedPostInfo: nil,
+                updateOrderOfInstalledStickerSets: false
+            )
+        }
+    }
+
     let chatId: Int64
     var text = "" {
         didSet {
@@ -107,7 +143,7 @@ final class ComposerModel {
 
     // MARK: - Sending
 
-    func submit() {
+    func submit(options: SendOptions = .standard) {
         guard canSubmit else { return }
         let raw = text.trimmingCharacters(in: .whitespacesAndNewlines)
         let mode = mode
@@ -124,7 +160,11 @@ final class ComposerModel {
                     text = textBeforeEdit
                     isRestoringDraft = false
                 case .compose, .reply:
-                    try await send(.inputMessageText(InputMessageText(clearDraft: true, linkPreviewOptions: nil, text: formatted)), replyTo: mode.message)
+                    try await send(
+                        .inputMessageText(InputMessageText(clearDraft: true, linkPreviewOptions: nil, text: formatted)),
+                        replyTo: mode.message,
+                        options: options
+                    )
                     self.mode = .compose
                     isRestoringDraft = true
                     text = ""
@@ -139,12 +179,12 @@ final class ComposerModel {
     }
 
     /// Sends arbitrary content, replying to the current reply target if any.
-    func send(_ content: InputMessageContent, replyTo: ChatMessage? = nil) async throws {
+    func send(_ content: InputMessageContent, replyTo: ChatMessage? = nil, options: SendOptions = .standard) async throws {
         let reply = (replyTo ?? replyTarget).map(Self.replyReference)
         _ = try await session.api.sendMessage(
             chatId: chatId,
             inputMessageContent: content,
-            options: nil,
+            options: options.messageSendOptions,
             replyMarkup: nil,
             replyTo: reply,
             topicId: nil
@@ -153,9 +193,15 @@ final class ComposerModel {
     }
 
     /// Sends several items as one album.
-    func sendAlbum(_ contents: [InputMessageContent]) async throws {
+    func sendAlbum(_ contents: [InputMessageContent], options: SendOptions = .standard) async throws {
         let reply = replyTarget.map(Self.replyReference)
-        _ = try await session.api.sendMessageAlbum(chatId: chatId, inputMessageContents: contents, options: nil, replyTo: reply, topicId: nil)
+        _ = try await session.api.sendMessageAlbum(
+            chatId: chatId,
+            inputMessageContents: contents,
+            options: options.messageSendOptions,
+            replyTo: reply,
+            topicId: nil
+        )
         if case .reply = mode { mode = .compose }
     }
 

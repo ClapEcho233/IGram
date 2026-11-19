@@ -40,6 +40,7 @@ final class ChatItem: Identifiable {
     fileprivate(set) var actionBar: ChatActionBar?
     fileprivate(set) var blockList: BlockList?
     fileprivate(set) var onlineMemberCount = 0
+    fileprivate(set) var hasScheduledMessages: Bool
     /// The message whose reply keyboard is shown under the composer (bots).
     fileprivate(set) var replyMarkupMessageId: Int64
     fileprivate(set) var replyMarkupMessage: Message?
@@ -76,6 +77,7 @@ final class ChatItem: Identifiable {
         actionBar = chat.actionBar
         blockList = chat.blockList
         replyMarkupMessageId = chat.replyMarkupMessageId
+        hasScheduledMessages = chat.hasScheduledMessages
         canBeDeletedForAllUsers = chat.canBeDeletedForAllUsers
         canBeDeletedOnlyForSelf = chat.canBeDeletedOnlyForSelf
     }
@@ -249,6 +251,8 @@ final class ChatStore {
             items[value.chatId]?.actionBar = value.actionBar
         case .updateChatBlockList(let value):
             items[value.chatId]?.blockList = value.blockList
+        case .updateChatHasScheduledMessages(let value):
+            items[value.chatId]?.hasScheduledMessages = value.hasScheduledMessages
         case .updateChatReplyMarkup(let value):
             guard let item = items[value.chatId] else { break }
             item.replyMarkupMessage = value.replyMarkupMessage

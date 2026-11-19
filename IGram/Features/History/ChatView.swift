@@ -23,6 +23,7 @@ struct ChatView: View {
     @State private var messageActions = MessageActionsModel()
     @State private var inChatSearch = InChatSearchModel()
     @State private var pinned: PinnedMessagesModel?
+    @State private var isShowingScheduled = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -72,6 +73,9 @@ struct ChatView: View {
                     .allowsHitTesting(false)
             }
         }
+        .sheet(isPresented: $isShowingScheduled) {
+            ScheduledMessagesSheet(chat: chat)
+        }
         .sheet(item: $attachments) { batch in
             if let composer {
                 SendFilesSheet(batch: batch, composer: composer)
@@ -82,6 +86,16 @@ struct ChatView: View {
         .toolbar {
             ToolbarItem(placement: .navigation) {
                 AvatarView(content: .chat(chat, myUserId: session.myUserId), size: 28)
+            }
+            if chat.hasScheduledMessages {
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        isShowingScheduled = true
+                    } label: {
+                        Label("Scheduled Messages", systemImage: "calendar.badge.clock")
+                    }
+                    .help("Scheduled messages")
+                }
             }
             ToolbarItem(placement: .primaryAction) {
                 Button {

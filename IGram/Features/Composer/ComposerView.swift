@@ -19,6 +19,8 @@ struct ComposerView: View {
     @State private var fieldHeight: CGFloat = 30
     @State private var keyboardMessage: Message?
     @State private var isKeyboardVisible = true
+    @State private var isScheduling = false
+    @State private var scheduleDate = Date.now
 
     var body: some View {
         VStack(spacing: 0) {
@@ -41,6 +43,11 @@ struct ComposerView: View {
             }
         }
         .background(.bar)
+        .sheet(isPresented: $isScheduling) {
+            ScheduleSheet(date: $scheduleDate, title: session.isSavedMessages(chat) ? String(localized: "Set a Reminder") : String(localized: "Schedule Message")) {
+                model.submit(options: .init(scheduleDate: scheduleDate))
+            }
+        }
         .task(id: chat.replyMarkupMessageId) {
             // TDLib announces the keyboard message by id at start-up and by value later.
             if let message = chat.replyMarkupMessage {
@@ -87,7 +94,7 @@ struct ComposerView: View {
                     text: $model.text,
                     placeholder: placeholder,
                     focusRequest: model.focusRequest,
-                    onSubmit: model.submit,
+                    onSubmit: { model.submit() },
                     onEditLast: editLastMessage,
                     onCancel: { model.cancelMode() },
                     onPasteFiles: onAttachFiles,
@@ -108,7 +115,7 @@ struct ComposerView: View {
                     .help(isKeyboardVisible ? "Hide bot keyboard" : "Show bot keyboard")
                 }
 
-                Button(action: model.submit) {
+                Button { model.submit() } label: {
                     Image(systemName: isEditing ? "checkmark.circle.fill" : "arrow.up.circle.fill")
                         .font(.system(size: 26))
                         .symbolRenderingMode(.hierarchical)
@@ -116,7 +123,24 @@ struct ComposerView: View {
                 .buttonStyle(.plain)
                 .foregroundStyle(model.canSubmit ? AnyShapeStyle(.tint) : AnyShapeStyle(.tertiary))
                 .disabled(!model.canSubmit)
-                .help(isEditing ? "Save" : "Send")
+                .help(isEditing ? "Save" : "Send — right-click for more options")
+                .contextMenu {
+                    if !isEditing {
+                        Button("Send Without Sound", systemImage: "bell.slash") {
+                            model.submit(options: .init(isSilent: true))
+                        }
+                        Button("Schedule Message…", systemImage: "calendar.badge.clock") {
+                            scheduleDate = Date.now.addingTimeInterval(3600)
+                            isScheduling = true
+                        }
+                        if chat.userId != nil, !session.isSavedMessages(chat) {
+                            Button("Send When Online", systemImage: "person.badge.clock") {
+                                model.submit(options: .init(whenOnline: true))
+                            }
+                        }
+                    }
+                }
+                .disabled(!model.canSubmit)
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 8)
