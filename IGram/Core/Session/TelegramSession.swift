@@ -17,6 +17,10 @@ import OSLog
 final class TelegramSession {
     @ObservationIgnored let client: TelegramClient
     @ObservationIgnored let credentials: APICredentials
+    /// Which account this is; each account has its own TDLib database.
+    let accountIndex: Int
+    /// True once TDLib started logging this account out.
+    private(set) var didLogOut = false
 
     private(set) var authorizationState: AuthorizationState?
     private(set) var connectionState: ConnectionState = .connectionStateConnecting
@@ -54,8 +58,9 @@ final class TelegramSession {
         return false
     }
 
-    init(credentials: APICredentials, client: TelegramClient = TelegramClient()) {
+    init(credentials: APICredentials, accountIndex: Int = 0, client: TelegramClient = TelegramClient()) {
         self.credentials = credentials
+        self.accountIndex = accountIndex
         self.client = client
         files = FileStore(client: client)
         chats = ChatStore(client: client)
@@ -145,6 +150,8 @@ final class TelegramSession {
             Task { await sendParameters() }
         case .authorizationStateReady:
             Log.session.info("Authorized")
+        case .authorizationStateLoggingOut:
+            didLogOut = true
         case .authorizationStateClosed:
             Log.session.info("TDLib closed")
         default:
@@ -165,7 +172,7 @@ final class TelegramSession {
 
     private func sendParameters() async {
         do {
-            let environment = try TDLibEnvironment.current()
+            let environment = try TDLibEnvironment.current(accountIndex: accountIndex)
             try await api.setTdlibParameters(
                 apiHash: credentials.apiHash,
                 apiId: credentials.apiId,

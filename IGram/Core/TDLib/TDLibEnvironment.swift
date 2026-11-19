@@ -17,15 +17,17 @@ nonisolated struct TDLibEnvironment: Sendable {
     var applicationVersion: String
     var systemLanguageCode: String
 
-    /// The environment for the current process, creating storage folders on demand.
-    static func current(fileManager: FileManager = .default) throws -> TDLibEnvironment {
+    /// The environment for an account, creating storage folders on demand.
+    /// The first account keeps the original folders so existing logins survive.
+    static func current(accountIndex: Int = 0, fileManager: FileManager = .default) throws -> TDLibEnvironment {
         let support = try fileManager.url(
             for: .applicationSupportDirectory,
             in: .userDomainMask,
             appropriateFor: nil,
             create: true
         )
-        let root = support.appending(path: "IGram/tdlib", directoryHint: .isDirectory)
+        let base = support.appending(path: "IGram/tdlib", directoryHint: .isDirectory)
+        let root = accountIndex == 0 ? base : base.appending(path: "account-\(accountIndex)", directoryHint: .isDirectory)
         let database = root.appending(path: "db", directoryHint: .isDirectory)
         let files = root.appending(path: "files", directoryHint: .isDirectory)
         for directory in [database, files] {
