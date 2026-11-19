@@ -150,7 +150,11 @@ struct MessageBubble: View {
     private var content: some View {
         switch message.content {
         case .messageText(let value):
-            textBlock(value.text)
+            if let preview = value.linkPreview {
+                linkPreviewBlock(text: value.text, preview: preview)
+            } else {
+                textBlock(value.text)
+            }
         case .messagePhoto, .messageVideo, .messageAnimation:
             mediaBlock
         case .messageDocument(let value):
@@ -228,6 +232,34 @@ struct MessageBubble: View {
             }
         }
         .fixedSize(horizontal: true, vertical: false)
+    }
+
+    /// Text followed by its web page preview; the footer moves below the card.
+    private func linkPreviewBlock(text: FormattedText, preview: LinkPreview) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            if preview.showAboveText {
+                LinkPreviewView(preview: preview, isOutgoingStyle: isOutgoingStyle)
+                    .padding(.horizontal, 10)
+                    .padding(.top, hasHeader ? 0 : 8)
+            }
+            if !text.text.isEmpty {
+                Text(text.attributedString(linkColor: ChatTheme.accent(outgoing: isOutgoingStyle)))
+                    .textSelection(.enabled)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 10)
+                    .padding(.top, hasHeader || preview.showAboveText ? 0 : 7)
+            }
+            if !preview.showAboveText {
+                LinkPreviewView(preview: preview, isOutgoingStyle: isOutgoingStyle)
+                    .padding(.horizontal, 10)
+            }
+            HStack {
+                Spacer(minLength: 0)
+                MessageFooter(message: entry.captionMessage, chat: chat, isOutgoingStyle: isOutgoingStyle)
+            }
+            .padding(.horizontal, 9)
+            .padding(.bottom, 6)
+        }
     }
 
     /// Text with the footer tucked into the end of the last line.
