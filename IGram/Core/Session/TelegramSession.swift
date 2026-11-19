@@ -32,6 +32,8 @@ final class TelegramSession {
 
     /// Invoked once after TDLib reports `authorizationStateClosed`.
     @ObservationIgnored var onClosed: (() -> Void)?
+    /// Observers that see every update after the stores applied it.
+    @ObservationIgnored private var updateObservers: [UUID: (Update) -> Void] = [:]
     @ObservationIgnored private var updatesTask: Task<Void, Never>?
     @ObservationIgnored private var didRequestClose = false
     @ObservationIgnored private var histories: [Int64: WeakHistory] = [:]
@@ -94,6 +96,18 @@ final class TelegramSession {
         return model
     }
 
+    /// Registers `observer` for all updates; returns a token for `removeObserver`.
+    @discardableResult
+    func addObserver(_ observer: @escaping (Update) -> Void) -> UUID {
+        let token = UUID()
+        updateObservers[token] = observer
+        return token
+    }
+
+    func removeObserver(_ token: UUID) {
+        updateObservers[token] = nil
+    }
+
     // MARK: - Update routing
 
     func handle(_ update: Update) {
@@ -109,6 +123,9 @@ final class TelegramSession {
             handleOption(name: value.name, value: value.value)
         default:
             _ = chats.handle(update) || peers.handle(update) || files.handle(update) || folders.handle(update)
+        }
+        for observer in updateObservers.values {
+            observer(update)
         }
     }
 
