@@ -91,6 +91,12 @@ struct MessageBubble: View {
         switch message.content {
         case .messageSticker(let value):
             StickerView(sticker: value.sticker)
+                .contentShape(.rect)
+                .onTapGesture {
+                    if value.sticker.setId.rawValue != 0 {
+                        main.stickerSet = .id(value.sticker.setId)
+                    }
+                }
         case .messageAnimatedEmoji(let value):
             if let sticker = value.animatedEmoji.sticker {
                 StickerView(sticker: sticker, side: 120)

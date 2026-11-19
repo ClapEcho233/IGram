@@ -39,6 +39,10 @@ final class MainModel {
     var webApp: WebAppRequest?
     /// Active Telegram Stories viewer sheet.
     var storyViewer: StoryViewerRequest?
+    /// A sticker set preview sheet (from tapping a sticker or t.me/addstickers link).
+    var stickerSet: StickerSetTarget?
+    /// A chat invite link awaiting confirmation before joining.
+    var inviteLink: InviteLinkRequest?
     /// Text to place into a chat's composer (e.g. from a Mini App inline switch).
     var pendingComposerText: ComposerDraft?
     /// A short message shown over the window, like tdesktop's `Ui::Toast`.

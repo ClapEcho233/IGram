@@ -117,6 +117,14 @@ struct MainView: View {
             StoryViewerSheet(request: request)
                 .environment(model)
         }
+        .sheet(item: $model.stickerSet) { target in
+            StickerSetSheet(target: target)
+                .environment(model)
+        }
+        .sheet(item: $model.inviteLink) { request in
+            InviteLinkSheet(request: request)
+                .environment(model)
+        }
         .environment(\.openURL, OpenURLAction { url in
             LinkRouter(session: session, main: model).handle(url)
         })

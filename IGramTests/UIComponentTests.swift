@@ -36,7 +36,16 @@ struct LinkRouterTests {
         #expect(LinkRouter.telegramUsername(from: URL(string: "https://t.me/+AbCdEf")!) == nil)
         #expect(LinkRouter.telegramUsername(from: URL(string: "https://t.me/joinchat")!) == nil)
         #expect(LinkRouter.telegramUsername(from: URL(string: "https://t.me/durov/123")!) == nil)
+        #expect(LinkRouter.telegramUsername(from: URL(string: "https://t.me/bot?start=abc")!) == nil)
         #expect(LinkRouter.telegramUsername(from: URL(string: "https://example.com/durov")!) == nil)
+    }
+
+    @Test func detectsTelegramDeepLinks() {
+        #expect(LinkRouter.isTelegramURL(URL(string: "https://t.me/+AbCdEf")!))
+        #expect(LinkRouter.isTelegramURL(URL(string: "https://t.me/addstickers/Animals")!))
+        #expect(LinkRouter.isTelegramURL(URL(string: "https://telegram.dog/durov/123")!))
+        #expect(LinkRouter.isTelegramURL(URL(string: "tg://resolve?domain=durov")!))
+        #expect(!LinkRouter.isTelegramURL(URL(string: "https://apple.com")!))
     }
 }
 
