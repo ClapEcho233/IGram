@@ -161,8 +161,8 @@ final class ComposerModel {
         insertion = (string, (insertion?.token ?? 0) + 1)
     }
 
-    /// Sends an inline bot result, such as a GIF found through @gif.
-    func sendInlineResult(queryId: TdInt64, resultId: String) async throws {
+    /// Sends an inline bot result, such as a GIF found through @gif or any @bot query.
+    func sendInlineResult(queryId: TdInt64, resultId: String, clearText: Bool = false) async throws {
         _ = try await session.api.sendInlineQueryResultMessage(
             chatId: chatId,
             hideViaBot: false,
@@ -173,6 +173,12 @@ final class ComposerModel {
             topicId: topic
         )
         if case .reply = mode { mode = .compose }
+        if clearText {
+            isRestoringDraft = true
+            text = ""
+            isRestoringDraft = false
+            await saveDraft()
+        }
     }
 
     // MARK: - Sending

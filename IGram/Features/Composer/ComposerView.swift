@@ -25,6 +25,7 @@ struct ComposerView: View {
     @State private var stickers = StickerLibrary()
     @State private var isShowingPanel = false
     @State private var autocomplete = AutocompleteModel()
+    @State private var inlineResults = InlineResultsModel()
     @State private var scheduleDate = Date.now
 
     var body: some View {
@@ -56,7 +57,14 @@ struct ComposerView: View {
             model.focus()
         }
         .task(id: model.text) {
-            await autocomplete.update(text: model.text, chat: chat, session: session)
+            await inlineResults.update(text: model.text, chatId: chat.id, isEditing: isEditing, session: session)
+        }
+        .task(id: model.text) {
+            if InlineQuery.parse(model.text) != nil {
+                autocomplete.clear()
+            } else {
+                await autocomplete.update(text: model.text, chat: chat, session: session)
+            }
         }
         .sheet(isPresented: $isScheduling) {
             ScheduleSheet(date: $scheduleDate, title: session.isSavedMessages(chat) ? String(localized: "Set a Reminder") : String(localized: "Schedule Message")) {
@@ -89,7 +97,10 @@ struct ComposerView: View {
                     .padding(.horizontal, 14)
                     .padding(.top, 6)
             }
-            if autocomplete.isVisible {
+            if inlineResults.isVisible {
+                InlineResultsPanel(chatId: chat.id, model: inlineResults, composer: model)
+                Divider()
+            } else if autocomplete.isVisible {
                 AutocompleteList(model: autocomplete) { autocomplete.accept($0, into: model) }
                 Divider()
             }

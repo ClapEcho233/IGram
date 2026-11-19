@@ -65,13 +65,19 @@ final class AutocompleteModel {
         case .command:
             results = commands(in: chat, session: session, matching: token.query)
         case .mention:
-            guard chat.isGroup else {
-                clear()
-                return
-            }
+            let atStart = token.length == text.count
             try? await Task.sleep(for: .milliseconds(150))
             guard !Task.isCancelled else { return }
-            results = await mentions(in: chat, session: session, matching: token.query)
+            var combined: [Suggestion] = []
+            if atStart {
+                combined.append(contentsOf: await inlineBots(session: session, matching: token.query))
+            }
+            if chat.isGroup {
+                let existing = Set(combined.map(\.id))
+                let members = await mentions(in: chat, session: session, matching: token.query)
+                combined.append(contentsOf: members.filter { !existing.contains($0.id) })
+            }
+            results = combined
         }
         guard self.token == token else { return }
         suggestions = Array(results.prefix(8))
@@ -134,6 +140,36 @@ final class AutocompleteModel {
                     )
                 }
         }
+    }
+
+    private func inlineBots(session: TelegramSession, matching query: String) async -> [Suggestion] {
+        guard let top = try? await session.api.getTopChats(category: .topChatCategoryInlineBots, limit: 10) else {
+            return []
+        }
+        let lowered = query.lowercased()
+        var results: [Suggestion] = []
+        for chatId in top.chatIds {
+            guard let userId = session.chats.chat(chatId)?.userId,
+                  let user = session.peers.user(userId).user,
+                  let username = user.username,
+                  case .userTypeBot(let bot) = user.type,
+                  bot.isInline else { continue }
+            if !lowered.isEmpty,
+               !username.lowercased().hasPrefix(lowered),
+               !user.fullName.lowercased().contains(lowered) {
+                continue
+            }
+            let subtitle = bot.inlineQueryPlaceholder.isEmpty ? "@\(username)" : "@\(username) · \(bot.inlineQueryPlaceholder)"
+            results.append(Suggestion(
+                id: "\(userId)",
+                title: user.fullName,
+                subtitle: subtitle,
+                replacement: "@\(username)",
+                mentionUserId: nil,
+                avatar: .user(user)
+            ))
+        }
+        return results
     }
 
     private func mentions(in chat: ChatItem, session: TelegramSession, matching query: String) async -> [Suggestion] {
