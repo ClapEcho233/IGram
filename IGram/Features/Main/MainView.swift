@@ -29,7 +29,10 @@ struct MainView: View {
                     ChatSearchResultsView(model: search)
                 }
             }
-            .searchable(text: $model.searchText, placement: .toolbar, prompt: Text("Search"))
+            // Messages keeps its search field at the top of the conversation list.
+            .safeAreaInset(edge: .top, spacing: 0) {
+                ChatListSearchField(text: $model.searchText)
+            }
             .toolbar {
                 ToolbarItem {
                     Menu {
@@ -67,6 +70,9 @@ struct MainView: View {
                     "Select a chat to start messaging",
                     systemImage: "bubble.left.and.bubble.right"
                 )
+                // Gives the empty detail column its own toolbar section so the
+                // chat list's compose button stays above the list.
+                .toolbar { ToolbarSpacer(.flexible) }
             }
         }
         .overlay(alignment: .top) {
@@ -88,14 +94,16 @@ struct MainView: View {
         .animation(.snappy, value: model.toast)
         .environment(model)
         .environment(audioPlayer)
-        .focusedSceneValue(\.chatNavigation, navigation)
         .onAppear {
-            navigation = ChatNavigation(session: session, model: model)
+            let navigation = ChatNavigation(session: session, model: model)
+            self.navigation = navigation
+            app.navigation = navigation
             app.notifications.main = model
             openPendingNotification()
         }
         .onDisappear {
             if app.notifications.main === model { app.notifications.main = nil }
+            if let navigation, app.navigation === navigation { app.navigation = nil }
         }
         .onChange(of: app.pendingOpen) { openPendingNotification() }
         .onChange(of: badgeIncludesMuted) { app.notifications.updateBadge() }
@@ -143,6 +151,48 @@ struct MainView: View {
         case .archive: String(localized: "Archived Chats")
         case .folder(let id):
             session.folders.folders.first { $0.id == id }?.name.text.text ?? String(localized: "Chats")
+        }
+    }
+}
+
+/// The search field above the chat list.
+private struct ChatListSearchField: View {
+    @Binding var text: String
+    @FocusState private var isFocused: Bool
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(.secondary)
+            TextField("Search", text: $text)
+                .textFieldStyle(.plain)
+                .focused($isFocused)
+                .onExitCommand {
+                    text = ""
+                    isFocused = false
+                }
+            if !text.isEmpty {
+                Button {
+                    text = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .help("Clear search")
+            }
+        }
+        .padding(.horizontal, 10)
+        .frame(height: 30)
+        .background(.quaternary.opacity(0.7), in: .capsule)
+        .padding(.horizontal, 12)
+        .padding(.top, 6)
+        .padding(.bottom, 8)
+        .background {
+            // Typing ⌥⌘F anywhere jumps here, like Find in other apps' sidebars.
+            Button("Search Chats") { isFocused = true }
+                .keyboardShortcut("f", modifiers: [.command, .option])
+                .hidden()
         }
     }
 }

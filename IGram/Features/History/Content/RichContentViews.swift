@@ -73,7 +73,6 @@ struct ContactView: View {
                     Text(contact.phoneNumber.hasPrefix("+") ? contact.phoneNumber : "+\(contact.phoneNumber)")
                         .font(.caption)
                         .foregroundStyle(theme.secondary(outgoing: isOutgoingStyle))
-                        .textSelection(.enabled)
                 }
             }
             if contact.userId != 0 {

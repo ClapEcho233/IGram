@@ -117,24 +117,33 @@ struct TabbedSelector: View {
     }
 }
 
+private struct EmojiCell: Identifiable {
+    let section: String
+    let emoji: String
+    var id: String { section + "/" + emoji }
+}
+
 private struct EmojiGrid: View {
     let onPick: (String) -> Void
 
     var body: some View {
         ScrollView {
             LazyVGrid(columns: Array(repeating: GridItem(.fixed(36), spacing: 4), count: 9), alignment: .leading, spacing: 4, pinnedViews: .sectionHeaders) {
-                section(String(localized: "Recently Used"), EmojiCatalog.recent)
+                section(id: "recent", String(localized: "Recently Used"), EmojiCatalog.recent)
                 ForEach(EmojiCatalog.sections) { section in
-                    self.section(section.title, section.emoji)
+                    self.section(id: section.id, section.title, section.emoji)
                 }
             }
             .padding(.horizontal, 8)
         }
     }
 
-    private func section(_ title: String, _ emoji: [String]) -> some View {
+    /// Emoji repeat between Recently Used and their category, so each cell's
+    /// identity includes its section; duplicate ids left blank cells.
+    private func section(id: String, _ title: String, _ emoji: [String]) -> some View {
         Section {
-            ForEach(emoji, id: \.self) { item in
+            ForEach(emoji.map { EmojiCell(section: id, emoji: $0) }) { cell in
+                let item = cell.emoji
                 Button {
                     onPick(item)
                 } label: {

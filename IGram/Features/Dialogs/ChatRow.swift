@@ -38,6 +38,8 @@ struct ChatRow: View {
                 titleLine
                 previewLine
             }
+            // Separators start under the text, not under the avatar's initials.
+            .alignmentGuide(.listRowSeparatorLeading) { $0[.leading] }
         }
         .padding(.vertical, 5)
         .contentShape(.rect)

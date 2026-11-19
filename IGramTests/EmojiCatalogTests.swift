@@ -21,8 +21,10 @@ struct EmojiCatalogTests {
         #expect(EmojiCatalog.sections[2].emoji.contains("🍕"))
     }
 
+    /// The emoji grid identifies cells by emoji within a section, so a
+    /// repeated emoji would render as a blank cell.
     @Test func noDuplicatesAcrossSections() {
-        let all = EmojiCatalog.sections.dropLast().flatMap(\.emoji).filter { !["❤️", "✨", "⭐️", "✅", "❌"].contains($0) }
+        let all = EmojiCatalog.sections.dropLast().flatMap(\.emoji)
         #expect(Set(all).count == all.count)
     }
 

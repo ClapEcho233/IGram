@@ -35,20 +35,24 @@ struct ChatView: View {
                 PinnedMessageBar(model: pinned, history: history)
             }
             HistoryView(chat: chat, history: history, unreadAnchor: unreadAnchor)
-            if messageActions.isSelecting {
-                SelectionBar(actions: messageActions, history: history, chat: chat)
-            } else if let composer {
-                ComposerView(
-                    chat: chat,
-                    model: composer,
-                    history: history,
-                    onAttachFiles: { urls in
-                        attach(urls)
-                        return true
-                    },
-                    onAttachButton: { isPickingFiles = true }
-                )
-            }
+                // The composer floats over the end of the transcript, like
+                // Messages; a safe-area bar gets the soft scroll edge under it.
+                .safeAreaBar(edge: .bottom, spacing: 0) {
+                    if messageActions.isSelecting {
+                        SelectionBar(actions: messageActions, history: history, chat: chat)
+                    } else if let composer {
+                        ComposerView(
+                            chat: chat,
+                            model: composer,
+                            history: history,
+                            onAttachFiles: { urls in
+                                attach(urls)
+                                return true
+                            },
+                            onAttachButton: { isPickingFiles = true }
+                        )
+                    }
+                }
         }
         .environment(composer)
         .environment(messageActions)
@@ -86,17 +90,19 @@ struct ChatView: View {
         .navigationTitle(topic?.name ?? session.title(of: chat))
         .navigationSubtitle(topic == nil ? session.subtitle(for: chat) : session.title(of: chat))
         .toolbar {
-            ToolbarItem(placement: .navigation) {
-                if let topic {
+            if topic != nil {
+                ToolbarItem(placement: .navigation) {
                     Button {
                         main.selectedTopic = nil
                     } label: {
                         Label("All Topics", systemImage: "chevron.backward")
                     }
                     .help("Back to all topics")
-                    ForumTopicIconView(info: topic).frame(width: 24, height: 24)
-                } else {
-                    AvatarView(content: .chat(chat, myUserId: session.myUserId), size: 28)
+                }
+            }
+            ToolbarItem(placement: .principal) {
+                ChatHeader(chat: chat, topic: topic) {
+                    main.isInfoPresented.toggle()
                 }
             }
             if topic == nil, session.isForum(chat) {
@@ -180,5 +186,53 @@ struct ChatView: View {
         guard let messageId = main.pendingMessageId, main.selectedChatId == chat.id else { return }
         main.pendingMessageId = nil
         await history.jump(to: messageId)
+    }
+}
+
+/// The chat's avatar, name and status in the middle of the toolbar, like the
+/// conversation header in Messages. Clicking it toggles the info panel.
+private struct ChatHeader: View {
+    let chat: ChatItem
+    let topic: ForumTopicInfo?
+    let action: () -> Void
+
+    @Environment(TelegramSession.self) private var session
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                if let topic {
+                    ForumTopicIconView(info: topic)
+                        .frame(width: 26, height: 26)
+                } else {
+                    AvatarView(
+                        content: .chat(chat, myUserId: session.myUserId),
+                        size: 26,
+                        isOnline: session.isOnline(chat)
+                    )
+                }
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(topic?.name ?? session.title(of: chat))
+                        .font(.headline)
+                        .lineLimit(1)
+                    if !subtitle.isEmpty {
+                        Text(subtitle)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+                }
+            }
+            .padding(.leading, 4)
+            .padding(.trailing, 10)
+            .frame(maxWidth: 360)
+            .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .help("Show chat info")
+    }
+
+    private var subtitle: String {
+        topic == nil ? session.subtitle(for: chat) : session.title(of: chat)
     }
 }

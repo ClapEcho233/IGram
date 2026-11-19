@@ -81,6 +81,8 @@ final class ChatFolderStore {
     /// Index of "All chats" among the folders, chosen by the user on other clients.
     private(set) var mainChatListPosition = 0
     private(set) var areTagsEnabled = false
+    /// Set once TDLib has reported the folder list for this session.
+    private(set) var isLoaded = false
 
     /// Tabs in display order, or an empty list when no folders exist.
     var tabs: [ChatFolderTab] {
@@ -97,6 +99,7 @@ final class ChatFolderStore {
     @discardableResult
     func handle(_ update: Update) -> Bool {
         guard case .updateChatFolders(let value) = update else { return false }
+        isLoaded = true
         folders = value.chatFolders
         mainChatListPosition = value.mainChatListPosition
         areTagsEnabled = value.areTagsEnabled

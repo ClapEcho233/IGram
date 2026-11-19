@@ -16,7 +16,14 @@ final class MainModel {
         case archive
     }
 
-    var sidebarSelection: SidebarItem? = .allChats
+    /// The selected folder, remembered across launches like tdesktop's last
+    /// active filter.
+    var sidebarSelection: SidebarItem? = MainModel.restoredSidebarSelection() {
+        didSet {
+            guard sidebarSelection != oldValue, let sidebarSelection else { return }
+            UserDefaults.standard.set(sidebarSelection.storageValue, forKey: AppPreferences.sidebarSelection)
+        }
+    }
     var selectedChatId: Int64? {
         didSet {
             if selectedChatId != oldValue { selectedTopic = nil }
@@ -76,6 +83,11 @@ final class MainModel {
         }
     }
 
+    private static func restoredSidebarSelection() -> SidebarItem {
+        UserDefaults.standard.string(forKey: AppPreferences.sidebarSelection)
+            .flatMap(SidebarItem.init(storageValue:)) ?? .allChats
+    }
+
     func open(chatId: Int64, messageId: Int64? = nil) {
         selectedChatId = chatId
         pendingMessageId = messageId
@@ -92,6 +104,27 @@ final class MainModel {
 
     func openStory(posterChatId: Int64, storyId: Int) {
         storyViewer = StoryViewerRequest(chatIds: [posterChatId], initialChatId: posterChatId, initialStoryId: storyId)
+    }
+}
+
+extension MainModel.SidebarItem {
+    /// A stable string for `UserDefaults`.
+    var storageValue: String {
+        switch self {
+        case .allChats: "all"
+        case .archive: "archive"
+        case .folder(let id): "folder:\(id)"
+        }
+    }
+
+    init?(storageValue: String) {
+        switch storageValue {
+        case "all": self = .allChats
+        case "archive": self = .archive
+        default:
+            guard storageValue.hasPrefix("folder:"), let id = Int(storageValue.dropFirst(7)) else { return nil }
+            self = .folder(id)
+        }
     }
 }
 

@@ -13,7 +13,7 @@ struct AppearanceSettingsView: View {
     @Environment(TelegramSession.self) private var session
     @Environment(\.colorScheme) private var effectiveColorScheme
     @AppStorage(AppPreferences.colorScheme) private var colorScheme = ColorSchemePreference.system.rawValue
-    @AppStorage(AppPreferences.chatPreset) private var presetValue = ChatThemePreset.classic.rawValue
+    @AppStorage(AppPreferences.chatPreset) private var presetValue = ChatThemePreset.default.rawValue
     @AppStorage(AppPreferences.customWallpaperPath) private var customWallpaperPath = ""
     @AppStorage(AppPreferences.customWallpaperBlurred) private var customWallpaperBlurred = false
     @AppStorage(AppPreferences.sendWithCommandReturn) private var sendWithCommandReturn = false
@@ -23,8 +23,8 @@ struct AppearanceSettingsView: View {
     @State private var errorMessage: String?
 
     private var isDark: Bool { effectiveColorScheme == .dark }
-    private var preset: ChatThemePreset { ChatThemePreset(rawValue: presetValue) ?? .classic }
-    private var activeStyle: ChatThemeStyle { ChatThemeStyle(palette: preset.palette(isDark: isDark), isDark: isDark) }
+    private var preset: ChatThemePreset { ChatThemePreset(rawValue: presetValue) ?? .default }
+    private var activeStyle: ChatThemeStyle { ChatThemeStyle(preset: preset, settings: nil, isDark: isDark) }
     private var installedBackgrounds: [Background] { session.themes.installedBackgrounds(forDarkTheme: isDark) }
     private var defaultBackgroundId: TdInt64? {
         (isDark ? session.themes.defaultDarkBackground : session.themes.defaultLightBackground)?.id
@@ -59,9 +59,9 @@ struct AppearanceSettingsView: View {
                 .padding(.vertical, 4)
             }
 
-            Section("Chat Wallpaper") {
+            Section {
                 livePreview
-                if !installedBackgrounds.isEmpty {
+                if !preset.usesSystemAppearance, !installedBackgrounds.isEmpty {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
                             ForEach(installedBackgrounds.prefix(16)) { background in
@@ -87,7 +87,7 @@ struct AppearanceSettingsView: View {
                     }
                     .disabled(isUpdatingWallpaper)
 
-                    if !customWallpaperPath.isEmpty || defaultBackgroundId != nil {
+                    if !customWallpaperPath.isEmpty || (!preset.usesSystemAppearance && defaultBackgroundId != nil) {
                         Button("Reset to Default") {
                             resetWallpaper()
                         }
@@ -108,6 +108,13 @@ struct AppearanceSettingsView: View {
                     Text(errorMessage)
                         .font(.caption)
                         .foregroundStyle(.red)
+                }
+            } header: {
+                Text("Chat Wallpaper")
+            } footer: {
+                if preset.usesSystemAppearance {
+                    Text("The Native style draws chats on the window background, like Messages. Choose another style to use Telegram wallpapers.")
+                        .foregroundStyle(.secondary)
                 }
             }
 
@@ -145,7 +152,7 @@ struct AppearanceSettingsView: View {
                         .foregroundStyle(activeStyle.primaryText(outgoing: false))
                         .padding(.horizontal, 10)
                         .padding(.vertical, 6)
-                        .background(activeStyle.bubbleStyle(outgoing: false), in: .rect(cornerRadius: 12))
+                        .background(activeStyle.bubbleStyle(outgoing: false), in: .rect(cornerRadius: activeStyle.isSystem ? 16 : 12, style: .continuous))
                     Spacer()
                 }
                 HStack {
@@ -155,7 +162,7 @@ struct AppearanceSettingsView: View {
                         .foregroundStyle(activeStyle.primaryText(outgoing: true))
                         .padding(.horizontal, 10)
                         .padding(.vertical, 6)
-                        .background(activeStyle.bubbleStyle(outgoing: true), in: .rect(cornerRadius: 12))
+                        .background(activeStyle.bubbleStyle(outgoing: true), in: .rect(cornerRadius: activeStyle.isSystem ? 16 : 12, style: .continuous))
                 }
             }
             .padding(12)

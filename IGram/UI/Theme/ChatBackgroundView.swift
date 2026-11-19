@@ -16,36 +16,48 @@ struct ChatBackgroundView: View {
 
     @Environment(TelegramSession.self) private var session: TelegramSession?
     @Environment(\.colorScheme) private var colorScheme
-    @AppStorage(AppPreferences.chatPreset) private var presetValue = ChatThemePreset.classic.rawValue
+    @AppStorage(AppPreferences.chatPreset) private var presetValue = ChatThemePreset.default.rawValue
     @AppStorage(AppPreferences.customWallpaperPath) private var customWallpaperPath = ""
     @AppStorage(AppPreferences.customWallpaperBlurred) private var customWallpaperBlurred = false
 
     private var isDark: Bool { colorScheme == .dark }
-    private var preset: ChatThemePreset { ChatThemePreset(rawValue: presetValue) ?? .classic }
+    private var preset: ChatThemePreset { ChatThemePreset(rawValue: presetValue) ?? .default }
 
     var body: some View {
         ZStack {
-            if let chat, let resolved = session?.themes.resolvedBackground(for: chat, isDark: isDark) {
+            if preset.usesSystemAppearance {
+                // Messages draws conversations on the plain window background;
+                // only a photo the user picked here replaces it.
+                if let image = LocalWallpaperStore.image(at: customWallpaperPath) {
+                    customWallpaper(image)
+                } else {
+                    Color(nsColor: .textBackgroundColor)
+                }
+            } else if let chat, let resolved = session?.themes.resolvedBackground(for: chat, isDark: isDark) {
                 TDLibBackgroundView(background: resolved.background, darkDimming: resolved.darkDimming)
             } else if chat == nil, let bg = isDark ? session?.themes.defaultDarkBackground : session?.themes.defaultLightBackground {
                 TDLibBackgroundView(background: bg, darkDimming: 0)
             } else if let image = LocalWallpaperStore.image(at: customWallpaperPath) {
-                GeometryReader { proxy in
-                    Image(nsImage: image)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: proxy.size.width, height: proxy.size.height)
-                        .clipped()
-                        .blur(radius: customWallpaperBlurred ? 12 : 0, opaque: true)
-                        .overlay {
-                            if isDark { Color.black.opacity(0.32) }
-                        }
-                }
+                customWallpaper(image)
             } else {
                 PresetBackgroundFill(colors: preset.palette(isDark: isDark).backgroundColors)
             }
         }
         .ignoresSafeArea()
+    }
+
+    private func customWallpaper(_ image: NSImage) -> some View {
+        GeometryReader { proxy in
+            Image(nsImage: image)
+                .resizable()
+                .scaledToFill()
+                .frame(width: proxy.size.width, height: proxy.size.height)
+                .clipped()
+                .blur(radius: customWallpaperBlurred ? 12 : 0, opaque: true)
+                .overlay {
+                    if isDark { Color.black.opacity(0.32) }
+                }
+        }
     }
 }
 
@@ -290,11 +302,11 @@ struct ChatThemePickerSheet: View {
     @Environment(MainModel.self) private var main
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dismiss) private var dismiss
-    @AppStorage(AppPreferences.chatPreset) private var presetValue = ChatThemePreset.classic.rawValue
+    @AppStorage(AppPreferences.chatPreset) private var presetValue = ChatThemePreset.default.rawValue
     @State private var isApplying = false
 
     private var isDark: Bool { colorScheme == .dark }
-    private var preset: ChatThemePreset { ChatThemePreset(rawValue: presetValue) ?? .classic }
+    private var preset: ChatThemePreset { ChatThemePreset(rawValue: presetValue) ?? .default }
 
     private var selectedEmojiName: String? {
         if case .chatThemeEmoji(let value) = chat.theme { return value.name }

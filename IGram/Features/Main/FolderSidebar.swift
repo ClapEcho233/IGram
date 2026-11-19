@@ -29,8 +29,20 @@ struct FolderSidebar: View {
             }
         }
         .listStyle(.sidebar)
-        .safeAreaInset(edge: .bottom, spacing: 0) {
+        // A bar rather than an opaque band, so the footer sits on the sidebar's
+        // own material like the rest of the column.
+        .safeAreaBar(edge: .bottom, spacing: 0) {
             AccountFooter()
+        }
+        .onAppear(perform: dropMissingFolder)
+        .onChange(of: session.folders.folders.map(\.id)) { dropMissingFolder() }
+    }
+
+    /// Falls back to All Chats when the remembered folder no longer exists.
+    private func dropMissingFolder() {
+        guard session.folders.isLoaded, case .folder(let id) = model.sidebarSelection else { return }
+        if !session.folders.folders.contains(where: { $0.id == id }) {
+            model.sidebarSelection = .allChats
         }
     }
 
@@ -94,7 +106,6 @@ private struct AccountFooter: View {
         .menuIndicator(.hidden)
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
-        .background(.bar)
     }
 
     /// The account's name, with its unread count when it isn't the one shown.

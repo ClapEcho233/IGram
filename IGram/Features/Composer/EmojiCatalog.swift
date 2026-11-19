@@ -34,7 +34,8 @@ nonisolated enum EmojiCatalog {
         let activity = collect([0x1F380...0x1F3CF, 0x1F93C...0x1F94F, 0x1F9E9...0x1F9F0, 0x26BD...0x26BE])
         let travel = collect([0x1F680...0x1F6FF, 0x1F3D4...0x1F3F7, 0x1F300...0x1F307, 0x1F30D...0x1F319])
         let objects = collect([0x1F4AC...0x1F53D, 0x1F9F1...0x1F9FF, 0x1FA70...0x1FAAF, 0x231A...0x23FF])
-        let symbols = collect([0x1F300...0x1FAFF, 0x2600...0x27BF])
+        let featured = ["❤️", "✨", "⭐️", "✅", "❌"]
+        let symbols = featured + collect([0x1F300...0x1FAFF, 0x2600...0x27BF]).filter { !featured.contains($0) }
         let flags = Locale.Region.isoRegions
             .map(\.identifier)
             .filter { $0.count == 2 && $0.allSatisfy(\.isLetter) }
@@ -47,7 +48,7 @@ nonisolated enum EmojiCatalog {
             Section(id: "activity", title: String(localized: "Activity"), systemImage: "soccerball", emoji: activity),
             Section(id: "travel", title: String(localized: "Travel & Places"), systemImage: "car", emoji: travel),
             Section(id: "objects", title: String(localized: "Objects"), systemImage: "lightbulb", emoji: objects),
-            Section(id: "symbols", title: String(localized: "Symbols"), systemImage: "heart", emoji: ["❤️", "✨", "⭐️", "✅", "❌"] + symbols),
+            Section(id: "symbols", title: String(localized: "Symbols"), systemImage: "heart", emoji: symbols),
             Section(id: "flags", title: String(localized: "Flags"), systemImage: "flag", emoji: flags),
         ]
     }()

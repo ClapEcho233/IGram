@@ -91,6 +91,23 @@ struct ChatThemeTests {
         #expect(themed.outgoingNeedsLightText)
     }
 
+    @Test func nativeStyleIsTheDefaultAndIgnoresChatThemes() {
+        #expect(ChatThemePreset.default == .system)
+        #expect(ChatThemePreset.system.usesSystemAppearance)
+        #expect(!ChatThemePreset.classic.usesSystemAppearance)
+
+        let settings = themeSettings(accent: 0xFF6B00, outgoing: 0x1A2B3C, background: nil)
+        let native = ChatThemeStyle(preset: .system, settings: settings, isDark: false)
+        #expect(native.isSystem)
+        #expect(native.palette == ChatThemePreset.system.lightPalette)
+        #expect(native.palette.outgoingNeedsLightText)
+        #expect(native.primaryText(outgoing: true) == .white)
+
+        let classic = ChatThemeStyle(preset: .classic, settings: settings, isDark: true)
+        #expect(!classic.isSystem)
+        #expect(classic.palette.outgoingBubble == .solid(0x1A2B3C))
+    }
+
     @Test func gradientAnglesMapToUnitPoints() {
         let down = BackgroundGeometry.gradientPoints(forAngle: 0)
         #expect(abs(down.start.x - 0.5) < 0.001 && abs(down.start.y - 0.0) < 0.001)

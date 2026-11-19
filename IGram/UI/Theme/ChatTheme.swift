@@ -7,8 +7,11 @@ import AppKit
 import SwiftUI
 @preconcurrency import TDLibKit
 
-/// Built-in chat palettes after tdesktop's Classic, Day, Tinted and Arctic themes.
+/// Built-in chat palettes: the native macOS Messages look, plus tdesktop's
+/// Classic, Day, Tinted and Arctic themes.
 enum ChatThemePreset: String, CaseIterable, Identifiable, Sendable {
+    /// System gray and blue bubbles on the plain window background, like Messages.
+    case system
     case classic
     case day
     case tinted
@@ -16,8 +19,16 @@ enum ChatThemePreset: String, CaseIterable, Identifiable, Sendable {
 
     var id: String { rawValue }
 
+    /// The style a fresh install uses.
+    static let `default` = ChatThemePreset.system
+
+    /// System chats ignore Telegram wallpapers and per-chat themes so every
+    /// conversation looks like Messages.
+    var usesSystemAppearance: Bool { self == .system }
+
     var title: String {
         switch self {
+        case .system: String(localized: "Native")
         case .classic: String(localized: "Classic")
         case .day: String(localized: "Day Blue")
         case .tinted: String(localized: "Tinted")
@@ -27,6 +38,16 @@ enum ChatThemePreset: String, CaseIterable, Identifiable, Sendable {
 
     var lightPalette: ChatThemePalette {
         switch self {
+        case .system:
+            ChatThemePalette(
+                backgroundColors: [0xFFFFFF],
+                incomingBubble: 0xE9E9EB,
+                outgoingBubble: .solid(0x0A84FF),
+                incomingSecondary: 0x8E8E93,
+                outgoingSecondary: 0xD6E8FF,
+                incomingAccent: 0x0A72E6,
+                outgoingAccent: 0xFFFFFF
+            )
         case .classic:
             ChatThemePalette(
                 backgroundColors: [0xD5E3D0, 0xC6DCB8, 0xDCE8CD],
@@ -72,6 +93,16 @@ enum ChatThemePreset: String, CaseIterable, Identifiable, Sendable {
 
     var darkPalette: ChatThemePalette {
         switch self {
+        case .system:
+            ChatThemePalette(
+                backgroundColors: [0x1E1E1E],
+                incomingBubble: 0x3B3B3D,
+                outgoingBubble: .solid(0x0A84FF),
+                incomingSecondary: 0x98989D,
+                outgoingSecondary: 0xD6E8FF,
+                incomingAccent: 0x4DA3FF,
+                outgoingAccent: 0xFFFFFF
+            )
         case .classic:
             ChatThemePalette(
                 backgroundColors: [0x0E1621],
@@ -218,8 +249,28 @@ nonisolated enum BackgroundGeometry {
 struct ChatThemeStyle: Equatable {
     let palette: ChatThemePalette
     let isDark: Bool
+    /// Messages-style presentation: plain background, captions instead of
+    /// service capsules and sender names above the bubbles.
+    var isSystem = false
 
-    static let `default` = ChatThemeStyle(palette: ChatThemePreset.classic.lightPalette, isDark: false)
+    static let `default` = ChatThemeStyle(palette: ChatThemePreset.system.lightPalette, isDark: false, isSystem: true)
+
+    init(palette: ChatThemePalette, isDark: Bool, isSystem: Bool = false) {
+        self.palette = palette
+        self.isDark = isDark
+        self.isSystem = isSystem
+    }
+
+    /// The style for `preset`, merging a chat's Telegram theme unless the
+    /// preset follows the system look.
+    init(preset: ChatThemePreset, settings: ThemeSettings?, isDark: Bool) {
+        let settings = preset.usesSystemAppearance ? nil : settings
+        self.init(
+            palette: ChatThemePalette.resolved(preset: preset, settings: settings, isDark: isDark),
+            isDark: isDark,
+            isSystem: preset.usesSystemAppearance
+        )
+    }
 
     func bubbleStyle(outgoing: Bool) -> AnyShapeStyle {
         guard outgoing else { return AnyShapeStyle(Color(rgb: palette.incomingBubble)) }

@@ -30,7 +30,6 @@ struct ComposerView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Divider()
             switch session.composerAvailability(for: chat) {
             case .canSend:
                 editor
@@ -44,11 +43,14 @@ struct ComposerView: View {
                 }
             case .restricted(let reason):
                 Text(reason)
+                    .font(.callout)
                     .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
                     .frame(maxWidth: .infinity, minHeight: 48)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 4)
             }
         }
-        .background(.bar)
         .onDisappear { voice.cancel() }
         .onChange(of: main.pendingComposerText) { _, draft in
             guard let draft, draft.chatId == chat.id else { return }
@@ -84,31 +86,52 @@ struct ComposerView: View {
         }
     }
 
+    private var hasAccessoryPanel: Bool {
+        model.mode.message != nil || model.errorMessage != nil || inlineResults.isVisible
+            || autocomplete.isVisible || showsReplyKeyboard
+    }
+
+    private var showsReplyKeyboard: Bool {
+        guard isKeyboardVisible, case .replyMarkupShowKeyboard = keyboardMessage?.replyMarkup else { return false }
+        return true
+    }
+
     private var editor: some View {
         VStack(spacing: 0) {
-            if let message = model.mode.message {
-                modeBar(for: message)
-            }
-            if let error = model.errorMessage {
-                Text(error)
-                    .font(.caption)
-                    .foregroundStyle(.red)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 14)
-                    .padding(.top, 6)
-            }
-            if inlineResults.isVisible {
-                InlineResultsPanel(chatId: chat.id, model: inlineResults, composer: model)
-                Divider()
-            } else if autocomplete.isVisible {
-                AutocompleteList(model: autocomplete) { autocomplete.accept($0, into: model) }
-                Divider()
-            }
-            if isKeyboardVisible, let message = keyboardMessage, case .replyMarkupShowKeyboard(let markup) = message.replyMarkup {
-                ReplyKeyboardView(chat: chat, markup: markup, markupMessage: message, composer: model) {
-                    isKeyboardVisible = false
+            if hasAccessoryPanel {
+                // Reply/edit previews, suggestions and bot keyboards float in a
+                // card above the field instead of over the transcript.
+                VStack(spacing: 0) {
+                    if let message = model.mode.message {
+                        modeBar(for: message)
+                            .padding(.bottom, 8)
+                    }
+                    if let error = model.errorMessage {
+                        Text(error)
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 8)
+                    }
+                    if inlineResults.isVisible {
+                        InlineResultsPanel(chatId: chat.id, model: inlineResults, composer: model)
+                    } else if autocomplete.isVisible {
+                        AutocompleteList(model: autocomplete) { autocomplete.accept($0, into: model) }
+                    }
+                    if showsReplyKeyboard, let message = keyboardMessage, case .replyMarkupShowKeyboard(let markup) = message.replyMarkup {
+                        ReplyKeyboardView(chat: chat, markup: markup, markupMessage: message, composer: model) {
+                            isKeyboardVisible = false
+                        }
+                    }
                 }
-                Divider()
+                .background(.regularMaterial, in: .rect(cornerRadius: 14, style: .continuous))
+                .clipShape(.rect(cornerRadius: 14, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(.separator)
+                }
+                .padding(.horizontal, 14)
+                .padding(.top, 6)
             }
             HStack(alignment: .bottom, spacing: 8) {
                 if let menu = botMenuButton {
@@ -128,8 +151,8 @@ struct ComposerView: View {
                                 .font(.callout.weight(.medium))
                                 .lineLimit(1)
                         }
-                        .padding(.horizontal, 10)
-                        .frame(height: 28)
+                        .padding(.horizontal, 12)
+                        .frame(height: Self.controlSize)
                         .foregroundStyle(.white)
                         .background(.tint, in: .capsule)
                     }
@@ -137,122 +160,132 @@ struct ComposerView: View {
                     .help(menu.text)
                 }
 
-                Button(action: onAttachButton) {
-                    Image(systemName: "paperclip")
-                        .font(.title3)
-                        .frame(width: 30, height: 30)
-                }
-                .buttonStyle(.plain)
-                .foregroundStyle(.secondary)
-                .help("Attach files")
+                ComposerCircleButton(systemImage: "plus", help: "Attach files", action: onAttachButton)
 
-                if voice.isRecording {
-                    VoiceRecordingBar(model: voice) { voice.cancel() }
-                } else {
-                    ComposerTextView(
-                        text: $model.text,
-                        placeholder: placeholder,
-                        focusRequest: model.focusRequest,
-                        insertion: model.insertion,
-                        onSubmit: {
-                            if !autocomplete.accept(into: model) { model.submit() }
-                        },
-                        onEditLast: editLastMessage,
-                        onArrow: { autocomplete.move($0) },
-                        onTab: { autocomplete.accept(into: model) },
-                        onCancel: { model.cancelMode() },
-                        onPasteFiles: onAttachFiles,
-                        height: $fieldHeight
-                    )
-                    .frame(height: fieldHeight)
+                HStack(alignment: .bottom, spacing: 4) {
+                    if voice.isRecording {
+                        VoiceRecordingBar(model: voice) { voice.cancel() }
+                            .frame(minHeight: Self.controlSize - 2)
+                    } else {
+                        ComposerTextView(
+                            text: $model.text,
+                            placeholder: placeholder,
+                            focusRequest: model.focusRequest,
+                            insertion: model.insertion,
+                            onSubmit: {
+                                if !autocomplete.accept(into: model) { model.submit() }
+                            },
+                            onEditLast: editLastMessage,
+                            onArrow: { autocomplete.move($0) },
+                            onTab: { autocomplete.accept(into: model) },
+                            onCancel: { model.cancelMode() },
+                            onPasteFiles: onAttachFiles,
+                            height: $fieldHeight
+                        )
+                        .frame(height: fieldHeight)
+                    }
+                    trailingFieldButton
+                        .frame(height: Self.controlSize - 2)
+                }
+                .padding(.leading, 12)
+                .padding(.trailing, 3)
+                .padding(.vertical, 1)
+                .frame(minHeight: Self.controlSize)
+                .background {
+                    let shape = RoundedRectangle(cornerRadius: Self.controlSize / 2, style: .continuous)
+                    shape.fill(Color(nsColor: .textBackgroundColor))
+                        .overlay { shape.strokeBorder(.separator) }
                 }
 
-                Button {
+                if case .replyMarkupShowKeyboard = keyboardMessage?.replyMarkup {
+                    ComposerCircleButton(
+                        systemImage: isKeyboardVisible ? "keyboard.chevron.compact.down" : "keyboard",
+                        help: isKeyboardVisible ? "Hide bot keyboard" : "Show bot keyboard"
+                    ) {
+                        isKeyboardVisible.toggle()
+                    }
+                }
+
+                ComposerCircleButton(systemImage: "face.smiling", help: "Emoji, stickers and GIFs") {
                     isShowingPanel.toggle()
-                } label: {
-                    Image(systemName: "face.smiling")
-                        .font(.title3)
-                        .frame(width: 30, height: 30)
                 }
-                .buttonStyle(.plain)
-                .foregroundStyle(.secondary)
-                .help("Emoji, stickers and GIFs")
                 .popover(isPresented: $isShowingPanel, arrowEdge: .top) {
                     TabbedSelector(chatId: chat.id, composer: model, library: stickers) {
                         isShowingPanel = false
                     }
                 }
+            }
+            .padding(.horizontal, 14)
+            .padding(.top, 6)
+            .padding(.bottom, 12)
+        }
+    }
 
-                if case .replyMarkupShowKeyboard = keyboardMessage?.replyMarkup {
-                    Button {
-                        isKeyboardVisible.toggle()
-                    } label: {
-                        Image(systemName: isKeyboardVisible ? "keyboard.chevron.compact.down" : "keyboard")
-                            .font(.title3)
-                            .frame(width: 30, height: 30)
+    /// Height of the input capsule and the round buttons beside it.
+    static let controlSize: CGFloat = 34
+
+    /// Inside the end of the field: the microphone while it's empty, otherwise
+    /// the blue send arrow, like Messages.
+    @ViewBuilder
+    private var trailingFieldButton: some View {
+        if showsMicrophone {
+            Button {
+                Task {
+                    if let error = await voice.start(chatId: chat.id, api: session.api) {
+                        model.errorMessage = error
                     }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(.secondary)
-                    .help(isKeyboardVisible ? "Hide bot keyboard" : "Show bot keyboard")
                 }
-
-                if showsMicrophone {
-                    Button {
-                        Task {
-                            if let error = await voice.start(chatId: chat.id, api: session.api) {
-                                model.errorMessage = error
-                            }
-                        }
-                    } label: {
-                        Image(systemName: "mic.circle.fill")
-                            .font(.system(size: 26))
-                            .symbolRenderingMode(.hierarchical)
+            } label: {
+                Image(systemName: "mic")
+                    .font(.system(size: 15, weight: .medium))
+                    .frame(width: 28, height: 28)
+                    .contentShape(.circle)
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(.secondary)
+            .help("Record a voice message")
+        } else if voice.isRecording {
+            Button { sendRecording() } label: {
+                sendGlyph(systemImage: "arrow.up")
+            }
+            .buttonStyle(.plain)
+            .keyboardShortcut(.return, modifiers: [])
+            .help("Send voice message")
+        } else {
+            Button { model.submit() } label: {
+                sendGlyph(systemImage: isEditing ? "checkmark" : "arrow.up")
+                    .opacity(model.canSubmit ? 1 : 0.4)
+            }
+            .buttonStyle(.plain)
+            .disabled(!model.canSubmit)
+            .help(isEditing ? "Save" : "Send — right-click for more options")
+            .contextMenu {
+                if !isEditing {
+                    Button("Send Without Sound", systemImage: "bell.slash") {
+                        model.submit(options: .init(isSilent: true))
                     }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(.tint)
-                    .help("Record a voice message")
-                } else if voice.isRecording {
-                    Button { sendRecording() } label: {
-                        Image(systemName: "arrow.up.circle.fill")
-                            .font(.system(size: 26))
-                            .symbolRenderingMode(.hierarchical)
+                    Button("Schedule Message…", systemImage: "calendar.badge.clock") {
+                        scheduleDate = Date.now.addingTimeInterval(3600)
+                        isScheduling = true
                     }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(.tint)
-                    .keyboardShortcut(.return, modifiers: [])
-                    .help("Send voice message")
-                } else {
-                    Button { model.submit() } label: {
-                        Image(systemName: isEditing ? "checkmark.circle.fill" : "arrow.up.circle.fill")
-                            .font(.system(size: 26))
-                            .symbolRenderingMode(.hierarchical)
-                    }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(model.canSubmit ? AnyShapeStyle(.tint) : AnyShapeStyle(.tertiary))
-                    .disabled(!model.canSubmit)
-                    .help(isEditing ? "Save" : "Send — right-click for more options")
-                    .contextMenu {
-                        if !isEditing {
-                            Button("Send Without Sound", systemImage: "bell.slash") {
-                                model.submit(options: .init(isSilent: true))
-                            }
-                            Button("Schedule Message…", systemImage: "calendar.badge.clock") {
-                                scheduleDate = Date.now.addingTimeInterval(3600)
-                                isScheduling = true
-                            }
-                            if chat.userId != nil, !session.isSavedMessages(chat) {
-                                Button("Send When Online", systemImage: "person.badge.clock") {
-                                    model.submit(options: .init(whenOnline: true))
-                                }
-                            }
+                    if chat.userId != nil, !session.isSavedMessages(chat) {
+                        Button("Send When Online", systemImage: "person.badge.clock") {
+                            model.submit(options: .init(whenOnline: true))
                         }
                     }
-                    .disabled(!model.canSubmit)
                 }
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 8)
         }
+    }
+
+    private func sendGlyph(systemImage: String) -> some View {
+        Image(systemName: systemImage)
+            .font(.system(size: 13, weight: .bold))
+            .foregroundStyle(.white)
+            .frame(width: 26, height: 26)
+            .background(.tint, in: .circle)
+            .frame(width: 28, height: 28)
+            .contentShape(.circle)
     }
 
     /// Like tdesktop, an empty field offers recording instead of sending.
@@ -348,10 +381,37 @@ struct ComposerView: View {
         } label: {
             Text(title)
                 .font(.body.weight(.semibold))
-                .frame(maxWidth: .infinity, minHeight: 48)
-                .contentShape(.rect)
+                .frame(maxWidth: 360, minHeight: Self.controlSize)
+                .background(Color(nsColor: .textBackgroundColor), in: .capsule)
+                .overlay { Capsule().strokeBorder(.separator) }
+                .contentShape(.capsule)
         }
         .buttonStyle(.plain)
         .foregroundStyle(.tint)
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 14)
+        .padding(.top, 6)
+        .padding(.bottom, 12)
+    }
+}
+
+/// A round button beside the input field, like the + and emoji buttons in Messages.
+private struct ComposerCircleButton: View {
+    let systemImage: String
+    let help: LocalizedStringKey
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .font(.system(size: 15, weight: .medium))
+                .foregroundStyle(.secondary)
+                .frame(width: ComposerView.controlSize, height: ComposerView.controlSize)
+                .background(Color(nsColor: .textBackgroundColor), in: .circle)
+                .overlay { Circle().strokeBorder(.separator) }
+                .contentShape(.circle)
+        }
+        .buttonStyle(.plain)
+        .help(help)
     }
 }

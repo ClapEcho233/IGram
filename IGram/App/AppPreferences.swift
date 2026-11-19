@@ -16,12 +16,13 @@ enum AppPreferences {
     static let notificationPreviews = "notifications.showPreview"
     static let notificationSound = "notifications.sound"
     static let badgeIncludesMuted = "badge.includesMuted"
+    static let sidebarSelection = "main.sidebarSelection"
 
     /// Registers defaults so unset keys read as tdesktop's defaults.
     static func registerDefaults(_ defaults: UserDefaults = .standard) {
         defaults.register(defaults: [
             colorScheme: ColorSchemePreference.system.rawValue,
-            chatPreset: ChatThemePreset.classic.rawValue,
+            chatPreset: ChatThemePreset.default.rawValue,
             customWallpaperPath: "",
             customWallpaperBlurred: false,
             sendWithCommandReturn: false,

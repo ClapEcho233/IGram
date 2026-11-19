@@ -1435,6 +1435,16 @@
         }
       }
     },
+    "Clear search" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清除搜索"
+          }
+        }
+      }
+    },
     "Clearing…" : {
       "localizations" : {
         "zh-Hans" : {
@@ -3134,6 +3144,16 @@
         }
       }
     },
+    "Native" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "原生"
+          }
+        }
+      }
+    },
     "New" : {
       "localizations" : {
         "zh-Hans" : {
@@ -4477,6 +4497,16 @@
         }
       }
     },
+    "Search Chats" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搜索聊天"
+          }
+        }
+      }
+    },
     "Search GIFs" : {
       "localizations" : {
         "zh-Hans" : {
@@ -5256,6 +5286,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Telegram 拒绝了此 API ID 或 hash。"
+          }
+        }
+      }
+    },
+    "The Native style draws chats on the window background, like Messages. Choose another style to use Telegram wallpapers." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "原生风格会像“信息”App 一样，在窗口背景上显示对话。选择其他风格即可使用 Telegram 壁纸。"
           }
         }
       }
@@ -6165,7 +6205,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ 在线"
+            "value" : "最后上线于 %@"
           }
         }
       }
@@ -6175,7 +6215,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld 分钟前在线"
+            "value" : "%lld 分钟前上线"
           }
         }
       }
@@ -6185,7 +6225,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "很久以前在线"
+            "value" : "很久以前上线"
           }
         }
       }
@@ -6195,7 +6235,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "刚刚在线"
+            "value" : "刚刚上线"
           }
         }
       }
@@ -6205,7 +6245,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "最近在线"
+            "value" : "最近上线"
           }
         }
       }
@@ -6215,7 +6255,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "今天 %@ 在线"
+            "value" : "最后上线于今天 %@"
           }
         }
       }
@@ -6225,7 +6265,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "一个月内在线"
+            "value" : "一个月内上线"
           }
         }
       }
@@ -6235,7 +6275,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "一周内在线"
+            "value" : "一周内上线"
           }
         }
       }
@@ -6245,7 +6285,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "昨天 %@ 在线"
+            "value" : "最后上线于昨天 %@"
           }
         }
       }

@@ -55,9 +55,23 @@ struct ChatFolderStoreTests {
             mainChatListPosition: 1
         )))
         #expect(handled)
+        #expect(store.isLoaded)
         #expect(store.folders.count == 1)
         #expect(store.mainChatListPosition == 1)
         #expect(store.areTagsEnabled)
         #expect(!store.handle(.updateOption(UpdateOption(name: "x", value: .optionValueEmpty))))
+    }
+
+    @Test func notLoadedUntilTDLibReportsFolders() {
+        #expect(!ChatFolderStore().isLoaded)
+    }
+
+    @Test func sidebarSelectionRoundTripsThroughDefaults() {
+        let items: [MainModel.SidebarItem] = [.allChats, .archive, .folder(237)]
+        for item in items {
+            #expect(MainModel.SidebarItem(storageValue: item.storageValue) == item)
+        }
+        #expect(MainModel.SidebarItem(storageValue: "folder:x") == nil)
+        #expect(MainModel.SidebarItem(storageValue: "") == nil)
     }
 }

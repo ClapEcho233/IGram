@@ -26,6 +26,10 @@ final class AppModel {
     }
     /// A clicked notification waiting for its account's window to open it.
     var pendingOpen: NotificationController.OpenRequest?
+    /// Menu bar actions for the account shown in the window. Set by the main
+    /// view: `focusedSceneValue` never reached the commands, which left the
+    /// New Message items disabled and the folder shortcuts missing.
+    var navigation: ChatNavigation?
     /// System notifications and the Dock badge for every account.
     @ObservationIgnored let notifications = NotificationController()
 

@@ -171,14 +171,19 @@ struct ChatInfoView: View {
     @ViewBuilder
     private var notificationToggle: some View {
         if !session.isSavedMessages(chat) {
-            Toggle(isOn: Binding(
-                get: { !session.chats.isMuted(chat) },
-                set: { enabled in Task { try? await session.setMuted(chat, muted: !enabled) } }
-            )) {
+            HStack {
                 Label("Notifications", systemImage: "bell")
+                Spacer(minLength: 8)
+                Toggle("Notifications", isOn: Binding(
+                    get: { !session.chats.isMuted(chat) },
+                    set: { enabled in Task { try? await session.setMuted(chat, muted: !enabled) } }
+                ))
+                .toggleStyle(.switch)
+                .controlSize(.small)
+                .labelsHidden()
             }
-            .toggleStyle(.switch)
-            .padding(12)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 9)
             .background(.quaternary.opacity(0.5), in: .rect(cornerRadius: 10))
         }
     }
@@ -285,29 +290,46 @@ struct ChatInfoView: View {
 
     // MARK: - Actions
 
+    /// Block, leave and delete as full-width rows in one card, like the
+    /// destructive rows at the end of a contact's details in Messages.
     @ViewBuilder
     private var actions: some View {
-        VStack(spacing: 8) {
-            if let userId = chat.userId, userId != session.myUserId {
-                let sender = MessageSender.messageSenderUser(MessageSenderUser(userId: userId))
-                Button(chat.blockList == nil ? "Block User" : "Unblock User", role: chat.blockList == nil ? .destructive : nil) {
-                    let list: BlockList? = chat.blockList == nil ? .blockListMain : nil
-                    Task { try? await session.api.setMessageSenderBlockList(blockList: list, senderId: sender) }
+        let blockable = chat.userId.map { $0 != session.myUserId } ?? false
+        let removable = session.canLeave(chat) || !session.isSavedMessages(chat)
+        if blockable || removable {
+            VStack(spacing: 0) {
+                if let userId = chat.userId, blockable {
+                    let sender = MessageSender.messageSenderUser(MessageSenderUser(userId: userId))
+                    actionRow(chat.blockList == nil ? String(localized: "Block User") : String(localized: "Unblock User")) {
+                        let list: BlockList? = chat.blockList == nil ? .blockListMain : nil
+                        Task { try? await session.api.setMessageSenderBlockList(blockList: list, senderId: sender) }
+                    }
+                    if removable { Divider().padding(.leading, 12) }
+                }
+                if session.canLeave(chat) {
+                    actionRow(chat.isChannel ? String(localized: "Leave Channel") : String(localized: "Leave Group")) {
+                        pendingRemoval = ChatRemoval(chat: chat, kind: .leave)
+                    }
+                } else if !session.isSavedMessages(chat) {
+                    actionRow(String(localized: "Delete Chat")) {
+                        pendingRemoval = ChatRemoval(chat: chat, kind: .delete)
+                    }
                 }
             }
-            if session.canLeave(chat) {
-                Button(chat.isChannel ? "Leave Channel" : "Leave Group", role: .destructive) {
-                    pendingRemoval = ChatRemoval(chat: chat, kind: .leave)
-                }
-            } else if !session.isSavedMessages(chat) {
-                Button("Delete Chat", role: .destructive) {
-                    pendingRemoval = ChatRemoval(chat: chat, kind: .delete)
-                }
-            }
+            .background(.quaternary.opacity(0.5), in: .rect(cornerRadius: 10))
         }
-        .buttonStyle(.borderless)
-        .foregroundStyle(.red)
-        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func actionRow(_ title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .foregroundStyle(.red)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 9)
+                .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
     }
 }
 

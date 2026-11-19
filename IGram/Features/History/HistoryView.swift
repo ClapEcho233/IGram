@@ -19,7 +19,7 @@ struct HistoryView: View {
 
     @Environment(TelegramSession.self) private var session: TelegramSession?
     @Environment(\.colorScheme) private var colorScheme
-    @AppStorage(AppPreferences.chatPreset) private var presetValue = ChatThemePreset.classic.rawValue
+    @AppStorage(AppPreferences.chatPreset) private var presetValue = ChatThemePreset.default.rawValue
     @State private var position = ScrollPosition(idType: String.self)
     @State private var isNearBottom = true
     @State private var highlightedMessageId: Int64?
@@ -27,7 +27,7 @@ struct HistoryView: View {
     var body: some View {
         let entries = HistoryLayout.entries(for: history.messages, lastReadInboxMessageId: unreadAnchor)
         ScrollView {
-            LazyVStack(spacing: 2) {
+            LazyVStack(spacing: 0) {
                 if history.didLoadInitial, history.hasMoreOlder {
                     pagingIndicator
                         .task(id: history.messages.first?.id) { await history.loadOlder() }
@@ -46,11 +46,12 @@ struct HistoryView: View {
                 }
             }
             .scrollTargetLayout()
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
         }
         .scrollPosition($position)
         .defaultScrollAnchor(.bottom)
+        .scrollEdgeEffectStyle(.soft, for: .vertical)
         .onScrollGeometryChange(for: Bool.self) { geometry in
             geometry.contentSize.height - geometry.visibleRect.maxY < 160
         } action: { _, nearBottom in
@@ -94,10 +95,9 @@ struct HistoryView: View {
 
     private var resolvedThemeStyle: ChatThemeStyle {
         let isDark = colorScheme == .dark
-        let preset = ChatThemePreset(rawValue: presetValue) ?? .classic
+        let preset = ChatThemePreset(rawValue: presetValue) ?? .default
         let settings = session?.themes.themeSettings(for: chat, isDark: isDark)
-        let palette = ChatThemePalette.resolved(preset: preset, settings: settings, isDark: isDark)
-        return ChatThemeStyle(palette: palette, isDark: isDark)
+        return ChatThemeStyle(preset: preset, settings: settings, isDark: isDark)
     }
 
     private var pagingIndicator: some View {

@@ -33,20 +33,41 @@ struct MessageBubble: View {
         VStack(alignment: .leading, spacing: 5) {
             if hasHeader {
                 headers
-                    .padding(.horizontal, 10)
-                    .padding(.top, 7)
+                    .padding(.horizontal, 12)
+                    .padding(.top, 8)
             }
             content
             if let reactions {
                 ReactionsView(message: entry.captionMessage, reactions: reactions, isOutgoingStyle: isOutgoingStyle)
-                    .padding(.horizontal, 10)
+                    .padding(.horizontal, 12)
                     .padding(.bottom, 7)
             }
         }
         .foregroundStyle(theme.primaryText(outgoing: isOutgoingStyle))
         .background(theme.bubbleStyle(outgoing: isOutgoingStyle), in: shape)
         .clipShape(shape)
-        .frame(maxWidth: 520, alignment: isOutgoingStyle ? .trailing : .leading)
+        .background(alignment: isOutgoingStyle ? .bottomTrailing : .bottomLeading) {
+            if showsTail {
+                BubbleTail()
+                    .fill(theme.bubbleStyle(outgoing: isOutgoingStyle))
+                    .frame(width: BubbleTail.size.width, height: BubbleTail.size.height)
+                    .scaleEffect(x: isOutgoingStyle ? 1 : -1)
+                    .offset(x: isOutgoingStyle ? BubbleTail.overhang : -BubbleTail.overhang)
+                    .accessibilityHidden(true)
+            }
+        }
+    }
+
+    /// Messages draws a tail on the last bubble of a run; media fills its
+    /// rounded rectangle without one.
+    private var showsTail: Bool {
+        guard theme.isSystem, entry.isLastInGroup else { return false }
+        switch message.content {
+        case .messagePhoto, .messageVideo, .messageAnimation:
+            return !(entry.captionMessage.text?.text.isEmpty ?? true)
+        default:
+            return true
+        }
     }
 
     // MARK: - Standalone content
@@ -123,8 +144,16 @@ struct MessageBubble: View {
 
     // MARK: - Headers
 
+    /// The sender's name above the content: inside the bubble for tdesktop
+    /// styles; the system style shows it above the bubble instead.
     private var showsSenderName: Bool {
-        entry.isFirstInGroup && !message.isOutgoing && (chat.isGroup || (chat.isChannel && message.senderId.chatId != chat.id))
+        !theme.isSystem && Self.showsSenderName(entry: entry, chat: chat)
+    }
+
+    static func showsSenderName(entry: MessageEntry, chat: ChatItem) -> Bool {
+        let message = entry.primary
+        return entry.isFirstInGroup && !message.isOutgoing
+            && (chat.isGroup || (chat.isChannel && message.senderId.chatId != chat.id))
     }
 
     private var hasHeader: Bool {
@@ -225,7 +254,7 @@ struct MessageBubble: View {
     ) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             content()
-                .padding(.horizontal, 10)
+                .padding(.horizontal, 12)
                 .padding(.top, hasHeader ? 0 : 8)
             if let caption, !caption.text.isEmpty {
                 textBlock(caption)
@@ -234,18 +263,18 @@ struct MessageBubble: View {
                     Spacer(minLength: 0)
                     MessageFooter(message: entry.captionMessage, chat: chat, isOutgoingStyle: isOutgoingStyle)
                 }
-                .padding(.horizontal, 9)
+                .padding(.horizontal, 11)
                 .padding(.bottom, 6)
             }
         }
-        .fixedSize(horizontal: true, vertical: false)
     }
 
     /// Photos, videos and GIFs fill the bubble; the caption sits below.
     @ViewBuilder
     private var mediaBlock: some View {
         let caption = entry.captionMessage.text ?? FormattedText(entities: [], text: "")
-        VStack(alignment: .leading, spacing: 5) {
+        // The media decides the bubble's width; a caption wraps inside it.
+        FirstChildWidthStack(spacing: 5) {
             Group {
                 if entry.isAlbum {
                     AlbumView(messages: entry.messages)
@@ -263,7 +292,6 @@ struct MessageBubble: View {
                 textBlock(caption)
             }
         }
-        .fixedSize(horizontal: true, vertical: false)
     }
 
     /// Text followed by its web page preview; the footer moves below the card.
@@ -271,25 +299,24 @@ struct MessageBubble: View {
         VStack(alignment: .leading, spacing: 6) {
             if preview.showAboveText {
                 LinkPreviewView(preview: preview, isOutgoingStyle: isOutgoingStyle)
-                    .padding(.horizontal, 10)
+                    .padding(.horizontal, 12)
                     .padding(.top, hasHeader ? 0 : 8)
             }
             if !text.text.isEmpty {
                 Text(text.attributedString(linkColor: theme.accent(outgoing: isOutgoingStyle)))
-                    .textSelection(.enabled)
                     .fixedSize(horizontal: false, vertical: true)
-                    .padding(.horizontal, 10)
+                    .padding(.horizontal, 12)
                     .padding(.top, hasHeader || preview.showAboveText ? 0 : 7)
             }
             if !preview.showAboveText {
                 LinkPreviewView(preview: preview, isOutgoingStyle: isOutgoingStyle)
-                    .padding(.horizontal, 10)
+                    .padding(.horizontal, 12)
             }
             HStack {
                 Spacer(minLength: 0)
                 MessageFooter(message: entry.captionMessage, chat: chat, isOutgoingStyle: isOutgoingStyle)
             }
-            .padding(.horizontal, 9)
+            .padding(.horizontal, 11)
             .padding(.bottom, 6)
         }
     }
@@ -300,15 +327,14 @@ struct MessageBubble: View {
             .font(.caption2)
             .foregroundStyle(.clear)
         return Text("\(Text(text.attributedString(linkColor: theme.accent(outgoing: isOutgoingStyle))))\(placeholder)")
-            .textSelection(.enabled)
             .fixedSize(horizontal: false, vertical: true)
-            .frame(minWidth: 40, alignment: .leading)
-            .padding(.horizontal, 10)
+            .frame(minWidth: 24, alignment: .leading)
+            .padding(.horizontal, 12)
             .padding(.top, hasHeader ? 0 : 7)
             .padding(.bottom, 7)
             .overlay(alignment: .bottomTrailing) {
                 MessageFooter(message: entry.captionMessage, chat: chat, isOutgoingStyle: isOutgoingStyle)
-                    .padding(.trailing, 9)
+                    .padding(.trailing, 11)
                     .padding(.bottom, 6)
             }
     }
@@ -321,22 +347,91 @@ struct MessageBubble: View {
 
     // MARK: - Shape
 
-    private var shape: UnevenRoundedRectangle {
+    private var shape: AnyShape {
+        if theme.isSystem {
+            return AnyShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        }
         let large: CGFloat = 14
         let small: CGFloat = 5
         if isOutgoingStyle {
-            return UnevenRoundedRectangle(
+            return AnyShape(UnevenRoundedRectangle(
                 topLeadingRadius: large,
                 bottomLeadingRadius: large,
                 bottomTrailingRadius: entry.isLastInGroup ? large : small,
                 topTrailingRadius: entry.isFirstInGroup ? large : small
-            )
+            ))
         }
-        return UnevenRoundedRectangle(
+        return AnyShape(UnevenRoundedRectangle(
             topLeadingRadius: entry.isFirstInGroup ? large : small,
             bottomLeadingRadius: entry.isLastInGroup ? large : small,
             bottomTrailingRadius: large,
             topTrailingRadius: large
+        ))
+    }
+}
+
+/// The curled tail of a Messages bubble, drawn for an outgoing bubble (the
+/// bubble's trailing edge is `overhang` points from the right) and mirrored for
+/// incoming ones.
+struct BubbleTail: Shape {
+    static let size = CGSize(width: 22, height: 20)
+    static let overhang: CGFloat = 6
+
+    func path(in rect: CGRect) -> Path {
+        let w = rect.width
+        let h = rect.height
+        let edge = w - Self.overhang
+        var path = Path()
+        path.move(to: CGPoint(x: 0, y: 0))
+        path.addLine(to: CGPoint(x: edge, y: 0))
+        path.addLine(to: CGPoint(x: edge, y: h * 0.25))
+        path.addCurve(
+            to: CGPoint(x: w, y: h),
+            control1: CGPoint(x: edge, y: h * 0.72),
+            control2: CGPoint(x: edge + 2.5, y: h * 0.94)
         )
+        path.addCurve(
+            to: CGPoint(x: w - 9, y: h - 1.8),
+            control1: CGPoint(x: w - 2.5, y: h + 0.2),
+            control2: CGPoint(x: w - 5.5, y: h - 0.9)
+        )
+        path.addCurve(
+            to: CGPoint(x: w - 16, y: h),
+            control1: CGPoint(x: w - 11.5, y: h - 0.4),
+            control2: CGPoint(x: w - 13.5, y: h)
+        )
+        path.addLine(to: CGPoint(x: 0, y: h))
+        path.closeSubpath()
+        return path.offsetBy(dx: rect.minX, dy: rect.minY)
+    }
+}
+
+/// A vertical stack as wide as its first child (up to the offered width);
+/// later children wrap to that width, e.g. a caption under a photo.
+struct FirstChildWidthStack: Layout {
+    var spacing: CGFloat = 0
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let width = width(for: proposal, subviews: subviews)
+        let heights = subviews.map { $0.sizeThatFits(ProposedViewSize(width: width, height: nil)).height }
+        let total = heights.reduce(0, +) + spacing * CGFloat(max(subviews.count - 1, 0))
+        return CGSize(width: width, height: total)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var y = bounds.minY
+        for subview in subviews {
+            let proposal = ProposedViewSize(width: bounds.width, height: nil)
+            let height = subview.sizeThatFits(proposal).height
+            subview.place(at: CGPoint(x: bounds.minX, y: y), anchor: .topLeading, proposal: ProposedViewSize(width: bounds.width, height: height))
+            y += height + spacing
+        }
+    }
+
+    private func width(for proposal: ProposedViewSize, subviews: Subviews) -> CGFloat {
+        guard let first = subviews.first else { return 0 }
+        let ideal = first.sizeThatFits(.unspecified).width
+        guard let offered = proposal.width else { return ideal }
+        return min(ideal, offered)
     }
 }

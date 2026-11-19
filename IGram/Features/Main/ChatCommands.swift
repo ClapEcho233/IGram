@@ -68,26 +68,22 @@ final class ChatNavigation {
     func startNewChat(_ kind: NewChatKind) { model.newChat = kind }
 }
 
-extension FocusedValues {
-    @Entry var chatNavigation: ChatNavigation?
-}
-
 /// The "Chats" menu, with tdesktop's shortcuts adapted to the Command key.
 struct ChatCommands: Commands {
-    @FocusedValue(\.chatNavigation) private var navigation
+    let app: AppModel
+
+    private var navigation: ChatNavigation? { app.navigation }
 
     var body: some Commands {
+        // Not disabled while signed out: AppKit keeps a menu item's first
+        // enabled state until the menu is opened, which swallowed ⌘N.
         CommandGroup(replacing: .newItem) {
             Button("New Message") { navigation?.startNewChat(.message) }
                 .keyboardShortcut("n", modifiers: .command)
-                .disabled(navigation == nil)
             Button("New Group") { navigation?.startNewChat(.group) }
                 .keyboardShortcut("n", modifiers: [.command, .shift])
-                .disabled(navigation == nil)
             Button("New Channel") { navigation?.startNewChat(.channel) }
-                .disabled(navigation == nil)
             Button("New Secret Chat") { navigation?.startNewChat(.secretChat) }
-                .disabled(navigation == nil)
         }
         CommandMenu("Chats") {
             Button("Next Chat") { navigation?.selectAdjacentChat(1) }
