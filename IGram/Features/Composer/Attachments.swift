@@ -60,7 +60,7 @@ enum AttachmentPreparer {
         return result
     }
 
-    static func uploadsDirectory() throws -> URL {
+    nonisolated static func uploadsDirectory() throws -> URL {
         let caches = try FileManager.default.url(for: .cachesDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
         let directory = caches.appending(path: "IGram/Uploads/\(UUID().uuidString)", directoryHint: .isDirectory)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)

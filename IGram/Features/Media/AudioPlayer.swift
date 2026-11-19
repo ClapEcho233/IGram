@@ -127,9 +127,9 @@ final class AudioPlayer {
     }
 }
 
-/// Decodes TDLib's voice note waveform: 5-bit samples packed little-endian,
-/// matching tdesktop's `documentWaveformDecode`.
-enum Waveform {
+/// TDLib's voice note waveform: 5-bit samples packed little-endian,
+/// matching tdesktop's `documentWaveformDecode`/`Encode`.
+nonisolated enum Waveform {
     static func decode(_ data: Data) -> [UInt8] {
         let bytes = [UInt8](data)
         let count = bytes.count * 8 / 5
@@ -144,6 +144,20 @@ enum Waveform {
             }
             return UInt8((value >> UInt16(shift)) & 0x1F)
         }
+    }
+
+    /// Packs 5-bit samples little-endian, the inverse of `decode`.
+    static func encode(_ samples: [UInt8]) -> Data {
+        var bytes = [UInt8](repeating: 0, count: (samples.count * 5 + 7) / 8)
+        for (index, sample) in samples.enumerated() {
+            let bitOffset = index * 5
+            let packed = UInt16(sample & 0x1F) << UInt16(bitOffset % 8)
+            bytes[bitOffset / 8] |= UInt8(packed & 0xFF)
+            if bitOffset / 8 + 1 < bytes.count {
+                bytes[bitOffset / 8 + 1] |= UInt8(packed >> 8)
+            }
+        }
+        return Data(bytes)
     }
 
     /// Resamples to `count` bars, keeping the peak of each bucket.
