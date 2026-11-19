@@ -36,7 +36,12 @@ final class TelegramSession {
     @ObservationIgnored private var updateObservers: [UUID: (Update) -> Void] = [:]
     @ObservationIgnored private var updatesTask: Task<Void, Never>?
     @ObservationIgnored private var didRequestClose = false
-    @ObservationIgnored private var histories: [Int64: WeakHistory] = [:]
+    @ObservationIgnored private var histories: [HistoryKey: WeakHistory] = [:]
+
+    private struct HistoryKey: Hashable {
+        let chatId: Int64
+        let topicId: Int?
+    }
 
     private struct WeakHistory {
         weak var model: HistoryModel?
@@ -87,12 +92,14 @@ final class TelegramSession {
         }
     }
 
-    /// The history model for a chat, shared while any view keeps it alive.
-    func history(for chatId: Int64) -> HistoryModel {
-        if let model = histories[chatId]?.model { return model }
-        let model = HistoryModel(chatId: chatId, client: client)
+    /// The history model for a chat or one of its forum topics, shared while
+    /// any view keeps it alive.
+    func history(for chatId: Int64, topicId: Int? = nil) -> HistoryModel {
+        let key = HistoryKey(chatId: chatId, topicId: topicId)
+        if let model = histories[key]?.model { return model }
+        let model = HistoryModel(chatId: chatId, topicId: topicId, client: client)
         histories = histories.filter { $0.value.model != nil }
-        histories[chatId] = WeakHistory(model: model)
+        histories[key] = WeakHistory(model: model)
         return model
     }
 
@@ -112,7 +119,9 @@ final class TelegramSession {
 
     func handle(_ update: Update) {
         if let chatId = update.messageChatId {
-            histories[chatId]?.model?.handle(update)
+            for (key, entry) in histories where key.chatId == chatId {
+                entry.model?.handle(update)
+            }
         }
         switch update {
         case .updateAuthorizationState(let value):

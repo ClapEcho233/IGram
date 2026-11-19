@@ -62,6 +62,8 @@ final class ComposerModel {
     }
 
     let chatId: Int64
+    /// Forum topic messages are sent to, if any.
+    let topic: MessageTopic?
     var text = "" {
         didSet {
             guard text != oldValue else { return }
@@ -84,10 +86,11 @@ final class ComposerModel {
     @ObservationIgnored private var isRestoringDraft = false
     @ObservationIgnored private var textBeforeEdit = ""
 
-    init(chat: ChatItem, session: TelegramSession) {
+    init(chat: ChatItem, session: TelegramSession, topicId: Int? = nil) {
         chatId = chat.id
+        topic = topicId.map { .messageTopicForum(MessageTopicForum(forumTopicId: $0)) }
         self.session = session
-        if case .draftMessageContentText(let content) = chat.draftMessage?.content {
+        if topicId == nil, case .draftMessageContentText(let content) = chat.draftMessage?.content {
             isRestoringDraft = true
             text = content.text.text
             isRestoringDraft = false
@@ -167,7 +170,7 @@ final class ComposerModel {
             queryId: queryId,
             replyTo: replyTarget.map(Self.replyReference),
             resultId: resultId,
-            topicId: nil
+            topicId: topic
         )
         if case .reply = mode { mode = .compose }
     }
@@ -218,7 +221,7 @@ final class ComposerModel {
             options: options.messageSendOptions,
             replyMarkup: nil,
             replyTo: reply,
-            topicId: nil
+            topicId: topic
         )
         if case .reply = mode { mode = .compose }
     }
@@ -231,7 +234,7 @@ final class ComposerModel {
             inputMessageContents: contents,
             options: options.messageSendOptions,
             replyTo: reply,
-            topicId: nil
+            topicId: topic
         )
         if case .reply = mode { mode = .compose }
     }
@@ -300,7 +303,8 @@ final class ComposerModel {
             lastTypingSent = .now
             let chatId = chatId
             let api = session.api
-            Task { _ = try? await api.sendChatAction(action: .chatActionTyping, businessConnectionId: nil, chatId: chatId, topicId: nil) }
+            let topic = topic
+            Task { _ = try? await api.sendChatAction(action: .chatActionTyping, businessConnectionId: nil, chatId: chatId, topicId: topic) }
         }
         scheduleDraftSave()
     }
@@ -327,7 +331,7 @@ final class ComposerModel {
             replyTo: replyTo,
             suggestedPostInfo: nil
         )
-        _ = try? await session.api.setChatDraftMessage(chatId: chatId, draftMessage: draft, topicId: nil)
+        _ = try? await session.api.setChatDraftMessage(chatId: chatId, draftMessage: draft, topicId: topic)
     }
 }
 

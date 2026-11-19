@@ -16,6 +16,8 @@ import OSLog
 @Observable
 final class HistoryModel {
     let chatId: Int64
+    /// The forum topic shown, or `nil` for the whole chat.
+    let topicId: Int?
 
     private(set) var messages: [ChatMessage] = []
     private(set) var didLoadInitial = false
@@ -45,9 +47,15 @@ final class HistoryModel {
 
     static let pageSize = 50
 
-    init(chatId: Int64, client: TelegramClient) {
+    init(chatId: Int64, topicId: Int? = nil, client: TelegramClient) {
         self.chatId = chatId
+        self.topicId = topicId
         self.client = client
+    }
+
+    /// The topic as TDLib addresses it in requests and messages.
+    var messageTopic: MessageTopic? {
+        topicId.map { .messageTopicForum(MessageTopicForum(forumTopicId: $0)) }
     }
 
     // MARK: - Lifecycle
@@ -167,13 +175,23 @@ final class HistoryModel {
 
     private func fetch(from messageId: Int64, offset: Int, limit: Int) async -> [Message]? {
         do {
-            let result = try await client.api.getChatHistory(
-                chatId: chatId,
-                fromMessageId: messageId,
-                limit: limit,
-                offset: offset,
-                onlyLocal: false
-            )
+            let result = if let topicId {
+                try await client.api.getForumTopicHistory(
+                    chatId: chatId,
+                    forumTopicId: topicId,
+                    fromMessageId: messageId,
+                    limit: limit,
+                    offset: offset
+                )
+            } else {
+                try await client.api.getChatHistory(
+                    chatId: chatId,
+                    fromMessageId: messageId,
+                    limit: limit,
+                    offset: offset,
+                    onlyLocal: false
+                )
+            }
             return result.messages ?? []
         } catch {
             Log.data.error("getChatHistory failed: \(error.telegramMessage, privacy: .public)")
@@ -311,8 +329,11 @@ final class HistoryModel {
     private func insertLive(_ message: Message) {
         // While the slice has a gap to the newest messages, new ones would be
         // disconnected from what is loaded; the view offers a jump instead.
-        // Scheduled messages live in their own list, not in the history.
-        guard didLoadInitial, !hasMoreNewer, message.schedulingState == nil, index(of: message.id) == nil else { return }
+        // Scheduled messages live in their own list, not in the history; a
+        // topic only shows its own messages.
+        guard didLoadInitial, !hasMoreNewer, message.schedulingState == nil, index(of: message.id) == nil,
+              topicId == nil || message.topicId == messageTopic
+        else { return }
         messages = Self.merge(messages, [message])
         if message.isOutgoing {
             focusRequest = FocusRequest(messageId: message.id, highlight: false)

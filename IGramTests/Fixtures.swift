@@ -26,7 +26,8 @@ enum Fixtures {
         isOutgoing: Bool = false,
         mediaAlbumId: Int64 = 0,
         replyTo: MessageReplyTo? = nil,
-        sendingState: MessageSendingState? = nil
+        sendingState: MessageSendingState? = nil,
+        topicId: MessageTopic? = nil
     ) -> Message {
         Message(
             authorSignature: "",
@@ -71,7 +72,7 @@ enum Fixtures {
             sendingState: sendingState,
             suggestedPostInfo: nil,
             summaryLanguageCode: "",
-            topicId: nil,
+            topicId: topicId,
             unreadReactions: [],
             viaBotUserId: 0
         )

@@ -153,4 +153,15 @@ struct HistoryModelTests {
         model.handle(.updateNewMessage(UpdateNewMessage(message: scheduled)))
         #expect(model.messages.map(\.id) == [10])
     }
+
+    @Test func topicHistoryKeepsOnlyItsMessages() {
+        let model = HistoryModel(chatId: 1, topicId: 5, client: Self.client)
+        model.setSlice([Fixtures.message(id: 10)], hasMoreOlder: false, hasMoreNewer: false)
+        let topic5 = MessageTopic.messageTopicForum(MessageTopicForum(forumTopicId: 5))
+        let topic6 = MessageTopic.messageTopicForum(MessageTopicForum(forumTopicId: 6))
+        model.handle(.updateNewMessage(UpdateNewMessage(message: Fixtures.message(id: 11, topicId: topic6))))
+        model.handle(.updateNewMessage(UpdateNewMessage(message: Fixtures.message(id: 12, topicId: topic5))))
+        #expect(model.messages.map(\.id) == [10, 12])
+        #expect(model.messageTopic == topic5)
+    }
 }
