@@ -33,6 +33,8 @@ final class MainModel {
     var searchText = ""
     /// The chat creation sheet being shown.
     var newChat: NewChatKind?
+    /// A proxy from a tg://proxy or t.me/socks link, awaiting confirmation.
+    var proxyToAdd: ProxyDraft?
     /// A short message shown over the window, like tdesktop's `Ui::Toast`.
     private(set) var toast: Toast?
 

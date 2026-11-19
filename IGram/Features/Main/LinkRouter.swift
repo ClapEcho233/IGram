@@ -18,6 +18,10 @@ struct LinkRouter {
             open(link)
             return .handled
         }
+        if let proxy = ProxyDraft(url: url) {
+            main.proxyToAdd = proxy
+            return .handled
+        }
         if let username = Self.telegramUsername(from: url) {
             open(.username(username))
             return .handled

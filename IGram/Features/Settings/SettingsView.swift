@@ -31,6 +31,9 @@ struct SettingsView: View {
                     Tab("Sessions", systemImage: "laptopcomputer.and.iphone") {
                         SessionsSettingsView()
                     }
+                    Tab("Proxy", systemImage: "network") {
+                        ProxySettingsView()
+                    }
                     Tab("Storage", systemImage: "internaldrive") {
                         StorageSettingsView()
                     }
@@ -43,6 +46,6 @@ struct SettingsView: View {
                 ContentUnavailableView("Not Signed In", systemImage: "person.crop.circle.badge.questionmark", description: Text("Sign in to change your settings."))
             }
         }
-        .frame(width: 520, height: 460)
+        .frame(width: 600, height: 520)
     }
 }

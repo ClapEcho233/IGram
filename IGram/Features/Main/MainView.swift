@@ -96,6 +96,11 @@ struct MainView: View {
         .onDisappear { notifications.detach() }
         .onChange(of: badgeIncludesMuted) { notifications.updateBadge() }
         .quickLookPreview($model.quickLookURL)
+        .sheet(isPresented: Binding(get: { model.proxyToAdd != nil }, set: { if !$0 { model.proxyToAdd = nil } })) {
+            if let draft = model.proxyToAdd {
+                AddProxySheet(draft: draft)
+            }
+        }
         .sheet(item: $model.newChat) { kind in
             NewChatSheet(kind: kind)
                 .environment(model)
