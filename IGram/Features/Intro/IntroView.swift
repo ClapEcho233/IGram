@@ -59,6 +59,12 @@ struct IntroView: View {
                 CodeStepView(model: model, codeInfo: value.codeInfo)
             case .authorizationStateWaitPassword(let value):
                 PasswordStepView(model: model, state: value)
+            case .authorizationStateWaitRegistration(let value):
+                RegistrationStepView(model: model, termsOfService: value.termsOfService)
+            case .authorizationStateWaitEmailAddress:
+                EmailAddressStepView(model: model)
+            case .authorizationStateWaitEmailCode(let value):
+                EmailCodeStepView(model: model, state: value)
             default:
                 ContentUnavailableView(
                     "Unsupported Step",
