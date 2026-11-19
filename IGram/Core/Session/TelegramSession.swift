@@ -25,6 +25,8 @@ final class TelegramSession {
     private(set) var startupError: String?
     private(set) var isClosed = false
 
+    @ObservationIgnored let peers = PeerStore()
+
     /// Invoked once after TDLib reports `authorizationStateClosed`.
     @ObservationIgnored var onClosed: (() -> Void)?
     @ObservationIgnored private var updatesTask: Task<Void, Never>?
@@ -84,7 +86,7 @@ final class TelegramSession {
         case .updateOption(let value):
             handleOption(name: value.name, value: value.value)
         default:
-            break
+            peers.handle(update)
         }
     }
 
