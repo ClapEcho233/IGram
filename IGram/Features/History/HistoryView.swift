@@ -17,6 +17,7 @@ struct HistoryView: View {
     /// `lastReadInboxMessageId` captured when the chat was opened.
     let unreadAnchor: Int64?
 
+    @Environment(TelegramSession.self) private var session: TelegramSession?
     @State private var position = ScrollPosition(idType: String.self)
     @State private var isNearBottom = true
     @State private var highlightedMessageId: Int64?
@@ -66,11 +67,23 @@ struct HistoryView: View {
             }
         }
         .overlay(alignment: .bottomTrailing) {
-            if !isNearBottom || history.hasMoreNewer {
-                jumpToBottomButton
-                    .padding(16)
-                    .transition(.scale.combined(with: .opacity))
+            VStack(spacing: 12) {
+                if chat.unreadReactionCount > 0 {
+                    UnreadJumpButton(systemImage: "heart", count: chat.unreadReactionCount, help: "Next unread reaction") {
+                        await jumpToFirst(.searchMessagesFilterUnreadReaction)
+                    }
+                }
+                if chat.unreadMentionCount > 0 {
+                    UnreadJumpButton(systemImage: "at", count: chat.unreadMentionCount, help: "Next unread mention") {
+                        await jumpToFirst(.searchMessagesFilterUnreadMention)
+                    }
+                }
+                if !isNearBottom || history.hasMoreNewer {
+                    jumpToBottomButton
+                        .transition(.scale.combined(with: .opacity))
+                }
             }
+            .padding(16)
         }
         .animation(.snappy, value: isNearBottom)
         .background(ChatTheme.background)
@@ -108,6 +121,18 @@ struct HistoryView: View {
         .help("Scroll to the latest message")
     }
 
+    /// Jumps to the oldest unread mention or reaction, as tdesktop's corner buttons do.
+    private func jumpToFirst(_ filter: SearchMessagesFilter) async {
+        guard let api = session?.api,
+              let found = try? await api.searchChatMessages(
+                  chatId: chat.id, filter: filter, fromMessageId: 0, limit: 100,
+                  offset: 0, query: "", senderId: nil, topicId: nil
+              ),
+              let oldest = found.messages.last
+        else { return }
+        await history.jump(to: oldest.id)
+    }
+
     private func focus(on request: HistoryModel.FocusRequest, in entries: [HistoryEntry]) {
         let target = entries.first { entry in
             if case .message(let message) = entry { return message.contains(request.messageId) }
@@ -129,5 +154,29 @@ struct HistoryView: View {
                 if highlightedMessageId == request.messageId { highlightedMessageId = nil }
             }
         }
+    }
+}
+
+/// A round corner button with a counter, used for unread mentions and reactions.
+private struct UnreadJumpButton: View {
+    let systemImage: String
+    let count: Int
+    let help: LocalizedStringKey
+    let action: () async -> Void
+
+    var body: some View {
+        Button {
+            Task { await action() }
+        } label: {
+            Image(systemName: systemImage)
+                .font(.title3.weight(.semibold))
+                .frame(width: 40, height: 40)
+                .background(.regularMaterial, in: .circle)
+                .overlay(alignment: .top) {
+                    UnreadBadge(count: count).offset(y: -12)
+                }
+        }
+        .buttonStyle(.plain)
+        .help(help)
     }
 }
