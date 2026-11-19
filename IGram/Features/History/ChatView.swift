@@ -32,7 +32,9 @@ struct ChatView: View {
                 PinnedMessageBar(model: pinned, history: history)
             }
             HistoryView(chat: chat, history: history, unreadAnchor: unreadAnchor)
-            if let composer {
+            if messageActions.isSelecting {
+                SelectionBar(actions: messageActions, history: history, chat: chat)
+            } else if let composer {
                 ComposerView(
                     chat: chat,
                     model: composer,

@@ -46,10 +46,16 @@ struct MessageRow: View {
     var isHighlighted = false
 
     @Environment(TelegramSession.self) private var session
+    @Environment(MessageActionsModel.self) private var actions: MessageActionsModel?
 
     private var message: ChatMessage { entry.primary }
     private var isOutgoingStyle: Bool { message.isOutgoing && !chat.isChannel }
     private var showsAvatarColumn: Bool { chat.isGroup && !message.isOutgoing }
+    private var isSelecting: Bool { actions?.isSelecting == true && !message.isService }
+    private var isSelected: Bool {
+        guard let actions else { return false }
+        return entry.messages.allSatisfy { actions.selectedIds.contains($0.id) }
+    }
 
     var body: some View {
         Group {
@@ -59,6 +65,13 @@ struct MessageRow: View {
                     .padding(.vertical, 4)
             } else {
                 HStack(alignment: .bottom, spacing: 6) {
+                    if isSelecting {
+                        Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                            .font(.title3)
+                            .foregroundStyle(isSelected ? AnyShapeStyle(.tint) : AnyShapeStyle(.secondary))
+                            .frame(maxHeight: .infinity, alignment: .center)
+                            .transition(.move(edge: .leading).combined(with: .opacity))
+                    }
                     if isOutgoingStyle { Spacer(minLength: 64) }
                     if showsAvatarColumn {
                         if entry.isLastInGroup {
@@ -83,13 +96,25 @@ struct MessageRow: View {
             }
         }
         .padding(.horizontal, 4)
+        .overlay {
+            // In selection mode a click anywhere on the row toggles it.
+            if isSelecting {
+                Color.clear
+                    .contentShape(.rect)
+                    .onTapGesture { actions?.toggleSelection(of: entry.messages.map(\.id)) }
+            }
+        }
         .background {
-            if isHighlighted {
+            if isSelected {
+                RoundedRectangle(cornerRadius: 8).fill(ChatTheme.highlight)
+                    .padding(.horizontal, -8)
+            } else if isHighlighted {
                 RoundedRectangle(cornerRadius: 8).fill(ChatTheme.highlight)
                     .padding(.horizontal, -8)
             }
         }
         .animation(.easeOut(duration: 0.3), value: isHighlighted)
+        .animation(.snappy, value: isSelecting)
         .onAppear {
             for item in entry.messages where !item.isOutgoing {
                 history.markViewed(item.id)

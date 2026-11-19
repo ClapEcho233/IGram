@@ -26,6 +26,25 @@ final class MessageActionsModel {
 
     var deletion: Deletion?
     var forwarding: Forwarding?
+    /// Messages chosen in selection mode, like tdesktop's `HistoryInner::_selected`.
+    private(set) var selectedIds: Set<Int64> = []
+
+    var isSelecting: Bool { !selectedIds.isEmpty }
+
+    func toggleSelection(of ids: [Int64]) {
+        if ids.allSatisfy(selectedIds.contains) {
+            selectedIds.subtract(ids)
+        } else {
+            selectedIds.formUnion(ids)
+        }
+    }
+
+    func clearSelection() { selectedIds.removeAll() }
+
+    /// Selected messages in chronological order.
+    func selectedMessages(in history: HistoryModel) -> [ChatMessage] {
+        selectedIds.sorted().compactMap(history.message)
+    }
 }
 
 /// The context menu of a message, after tdesktop's `HistoryView::FillContextMenu`.
@@ -106,6 +125,9 @@ struct MessageContextMenu: View {
                     }
                 }
             }
+        }
+        Button("Select", systemImage: "checkmark.circle") {
+            actions?.toggleSelection(of: entry.messages.map(\.id))
         }
         if let properties, properties.canBeDeletedOnlyForSelf || properties.canBeDeletedForAllUsers {
             Divider()
