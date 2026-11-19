@@ -20,6 +20,14 @@ struct MessageBubble: View {
     private var isOutgoingStyle: Bool { message.isOutgoing && !chat.isChannel }
 
     var body: some View {
+        if isStandalone {
+            standaloneBody
+        } else {
+            bubbleBody
+        }
+    }
+
+    private var bubbleBody: some View {
         VStack(alignment: .leading, spacing: 5) {
             if hasHeader {
                 headers
@@ -31,6 +39,61 @@ struct MessageBubble: View {
         .background(ChatTheme.bubble(outgoing: isOutgoingStyle), in: shape)
         .clipShape(shape)
         .frame(maxWidth: 520, alignment: isOutgoingStyle ? .trailing : .leading)
+    }
+
+    // MARK: - Standalone content
+
+    /// Stickers, big emoji and round videos are drawn without a bubble.
+    private var isStandalone: Bool {
+        switch message.content {
+        case .messageSticker, .messageAnimatedEmoji, .messageDice, .messageVideoNote: true
+        default: false
+        }
+    }
+
+    private var standaloneBody: some View {
+        VStack(alignment: isOutgoingStyle ? .trailing : .leading, spacing: 4) {
+            if hasHeader {
+                VStack(alignment: .leading, spacing: 4) { headers }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(ChatTheme.bubble(outgoing: isOutgoingStyle), in: .rect(cornerRadius: 10))
+                    .frame(maxWidth: 300, alignment: .leading)
+            }
+            standaloneContent
+                .overlay(alignment: .bottomTrailing) {
+                    MessageFooter(message: message, chat: chat, isOutgoingStyle: isOutgoingStyle, overMedia: true)
+                }
+        }
+    }
+
+    @ViewBuilder
+    private var standaloneContent: some View {
+        switch message.content {
+        case .messageSticker(let value):
+            StickerView(sticker: value.sticker)
+        case .messageAnimatedEmoji(let value):
+            if let sticker = value.animatedEmoji.sticker, sticker.format == .stickerFormatWebp {
+                StickerView(sticker: sticker, side: 120)
+            } else {
+                EmojiPlaceholder(emoji: value.emoji, size: 80)
+                    .padding(.bottom, 14)
+            }
+        case .messageDice(let value):
+            VStack(spacing: 2) {
+                EmojiPlaceholder(emoji: value.emoji, size: 64)
+                if value.value > 0 {
+                    Text("Result: \(value.value)")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .padding(.bottom, 18)
+        case .messageVideoNote(let value):
+            VideoNoteView(videoNote: value.videoNote)
+        default:
+            EmptyView()
+        }
     }
 
     // MARK: - Headers
