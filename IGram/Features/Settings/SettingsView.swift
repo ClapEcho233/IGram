@@ -19,6 +19,15 @@ struct SettingsView: View {
                     Tab("Appearance", systemImage: "paintbrush") {
                         AppearanceSettingsView()
                     }
+                    Tab("Sessions", systemImage: "laptopcomputer.and.iphone") {
+                        SessionsSettingsView()
+                    }
+                    Tab("Storage", systemImage: "internaldrive") {
+                        StorageSettingsView()
+                    }
+                    Tab("Advanced", systemImage: "gearshape.2") {
+                        AdvancedSettingsView()
+                    }
                 }
                 .environment(session)
             } else {
