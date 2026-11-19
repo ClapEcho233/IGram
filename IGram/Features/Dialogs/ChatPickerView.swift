@@ -10,6 +10,8 @@ import SwiftUI
 /// A searchable list of chats to pick a destination from, like tdesktop's
 /// `ChooseRecipientBoxController`.
 struct ChatPickerView: View {
+    /// Folders can hold channels the user can't post in; forwarding can't.
+    var includesReadOnlyChats = false
     let onPick: (ChatItem) -> Void
 
     @Environment(TelegramSession.self) private var session
@@ -18,7 +20,7 @@ struct ChatPickerView: View {
 
     var body: some View {
         let ids = searchResults ?? session.chats.list(.chatListMain).chatIds
-        let chats = ids.compactMap(session.chats.chat).filter { session.composerAvailability(for: $0) == .canSend }
+        let chats = ids.compactMap(session.chats.chat).filter { includesReadOnlyChats || session.composerAvailability(for: $0) == .canSend }
         VStack(spacing: 0) {
             TextField("Search", text: $query)
                 .textFieldStyle(.roundedBorder)

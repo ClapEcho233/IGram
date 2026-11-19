@@ -19,6 +19,9 @@ struct SettingsView: View {
                     Tab("Notifications", systemImage: "bell.badge") {
                         NotificationSettingsView()
                     }
+                    Tab("Folders", systemImage: "folder") {
+                        FoldersSettingsView()
+                    }
                     Tab("Appearance", systemImage: "paintbrush") {
                         AppearanceSettingsView()
                     }
