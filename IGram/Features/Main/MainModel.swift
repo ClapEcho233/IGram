@@ -23,6 +23,8 @@ final class MainModel {
     var pendingMessageId: Int64?
     /// A downloaded file shown in Quick Look (photos, videos, documents).
     var quickLookURL: URL?
+    /// Text of the global search field above the chat list.
+    var searchText = ""
 
     var chatList: ChatList {
         switch sidebarSelection ?? .allChats {

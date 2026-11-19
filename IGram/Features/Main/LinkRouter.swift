@@ -50,8 +50,8 @@ struct LinkRouter {
                         replyTo: nil,
                         topicId: nil
                     )
-                case .hashtag:
-                    break
+                case .hashtag(let tag):
+                    main.searchText = tag
                 }
             } catch {
                 Log.ui.error("Couldn't open link: \(error.telegramMessage, privacy: .public)")

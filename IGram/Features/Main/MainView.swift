@@ -12,14 +12,23 @@ struct MainView: View {
     @Environment(TelegramSession.self) private var session
     @State private var model = MainModel()
     @State private var audioPlayer = AudioPlayer()
+    @State private var search = ChatSearchModel()
 
     var body: some View {
         NavigationSplitView {
             FolderSidebar(model: model)
                 .navigationSplitViewColumnWidth(min: 170, ideal: 200, max: 280)
         } content: {
-            ChatListView(chatList: model.chatList, selection: $model.selectedChatId)
-                .navigationTitle(navigationTitle)
+            Group {
+                if model.searchText.isEmpty {
+                    ChatListView(chatList: model.chatList, selection: $model.selectedChatId)
+                } else {
+                    ChatSearchResultsView(model: search)
+                }
+            }
+            .searchable(text: $model.searchText, placement: .toolbar, prompt: Text("Search"))
+            .task(id: model.searchText) { await search.search(model.searchText, api: session.api) }
+            .navigationTitle(navigationTitle)
                 .navigationSplitViewColumnWidth(min: 280, ideal: 340, max: 520)
         } detail: {
             if let chatId = model.selectedChatId, let chat = session.chats.chat(chatId) {
