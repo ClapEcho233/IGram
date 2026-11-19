@@ -36,12 +36,17 @@ struct APISetupView: View {
 
             Form {
                 TextField("API ID", text: $apiId, prompt: Text(verbatim: "1234567"))
-                TextField("API hash", text: $apiHash, prompt: Text(verbatim: "0123456789abcdef0123456789abcdef"))
-                    .font(.body.monospaced())
+                LabeledContent("API hash") {
+                    TextField("API hash", text: $apiHash, prompt: Text(verbatim: "0123456789abcdef0123456789abcdef"))
+                        .labelsHidden()
+                        .monospaced()
+                        .multilineTextAlignment(.trailing)
+                }
                 Toggle("Use test servers", isOn: $useTestDC)
             }
             .formStyle(.grouped)
-            .frame(maxWidth: 460)
+            .scrollDisabled(true)
+            .frame(maxWidth: 460, maxHeight: 200)
             .onSubmit(submit)
 
             HStack {
