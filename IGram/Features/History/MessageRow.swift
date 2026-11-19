@@ -67,10 +67,16 @@ struct MessageRow: View {
                             Color.clear.frame(width: 34, height: 1)
                         }
                     }
-                    MessageBubble(entry: entry, chat: chat, history: history)
-                        .contextMenu {
-                            MessageContextMenu(entry: entry, chat: chat, history: history)
+                    VStack(alignment: isOutgoingStyle ? .trailing : .leading, spacing: 3) {
+                        MessageBubble(entry: entry, chat: chat, history: history)
+                            .contextMenu {
+                                MessageContextMenu(entry: entry, chat: chat, history: history)
+                            }
+                        if case .replyMarkupInlineKeyboard(let keyboard) = entry.captionMessage.replyMarkup {
+                            InlineKeyboardView(message: entry.captionMessage, rows: keyboard.rows)
                         }
+                    }
+                    .fixedSize(horizontal: true, vertical: false)
                     if !isOutgoingStyle { Spacer(minLength: 64) }
                 }
                 .padding(.top, entry.isFirstInGroup ? 6 : 1)

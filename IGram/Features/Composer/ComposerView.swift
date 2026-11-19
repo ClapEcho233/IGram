@@ -17,6 +17,8 @@ struct ComposerView: View {
 
     @Environment(TelegramSession.self) private var session
     @State private var fieldHeight: CGFloat = 30
+    @State private var keyboardMessage: Message?
+    @State private var isKeyboardVisible = true
 
     var body: some View {
         VStack(spacing: 0) {
@@ -39,6 +41,17 @@ struct ComposerView: View {
             }
         }
         .background(.bar)
+        .task(id: chat.replyMarkupMessageId) {
+            // TDLib announces the keyboard message by id at start-up and by value later.
+            if let message = chat.replyMarkupMessage {
+                keyboardMessage = message
+            } else if chat.replyMarkupMessageId != 0 {
+                keyboardMessage = try? await session.api.getMessage(chatId: chat.id, messageId: chat.replyMarkupMessageId)
+            } else {
+                keyboardMessage = nil
+            }
+            isKeyboardVisible = true
+        }
     }
 
     private var editor: some View {
@@ -53,6 +66,12 @@ struct ComposerView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 14)
                     .padding(.top, 6)
+            }
+            if isKeyboardVisible, let message = keyboardMessage, case .replyMarkupShowKeyboard(let markup) = message.replyMarkup {
+                ReplyKeyboardView(chat: chat, markup: markup, markupMessage: message, composer: model) {
+                    isKeyboardVisible = false
+                }
+                Divider()
             }
             HStack(alignment: .bottom, spacing: 8) {
                 Button(action: onAttachButton) {
@@ -75,6 +94,19 @@ struct ComposerView: View {
                     height: $fieldHeight
                 )
                 .frame(height: fieldHeight)
+
+                if case .replyMarkupShowKeyboard = keyboardMessage?.replyMarkup {
+                    Button {
+                        isKeyboardVisible.toggle()
+                    } label: {
+                        Image(systemName: isKeyboardVisible ? "keyboard.chevron.compact.down" : "keyboard")
+                            .font(.title3)
+                            .frame(width: 30, height: 30)
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.secondary)
+                    .help(isKeyboardVisible ? "Hide bot keyboard" : "Show bot keyboard")
+                }
 
                 Button(action: model.submit) {
                     Image(systemName: isEditing ? "checkmark.circle.fill" : "arrow.up.circle.fill")
