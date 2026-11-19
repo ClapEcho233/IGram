@@ -3,6 +3,7 @@
 //  IGramTests
 //
 
+import Foundation
 import Testing
 @testable import IGram
 
@@ -23,5 +24,17 @@ struct UIComponentTests {
         #expect(UnreadBadge.format(1000) == "1K")
         #expect(UnreadBadge.format(1500) == "1.5K")
         #expect(UnreadBadge.format(25_000) == "25K")
+    }
+}
+
+@MainActor
+struct LinkRouterTests {
+    @Test func extractsUsernamesFromTelegramLinks() {
+        #expect(LinkRouter.telegramUsername(from: URL(string: "https://t.me/durov")!) == "durov")
+        #expect(LinkRouter.telegramUsername(from: URL(string: "https://telegram.me/swift")!) == "swift")
+        #expect(LinkRouter.telegramUsername(from: URL(string: "https://t.me/+AbCdEf")!) == nil)
+        #expect(LinkRouter.telegramUsername(from: URL(string: "https://t.me/joinchat")!) == nil)
+        #expect(LinkRouter.telegramUsername(from: URL(string: "https://t.me/durov/123")!) == nil)
+        #expect(LinkRouter.telegramUsername(from: URL(string: "https://example.com/durov")!) == nil)
     }
 }

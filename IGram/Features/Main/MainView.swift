@@ -31,6 +31,9 @@ struct MainView: View {
             }
         }
         .environment(model)
+        .environment(\.openURL, OpenURLAction { url in
+            LinkRouter(session: session, main: model).handle(url)
+        })
     }
 
     private var navigationTitle: String {
