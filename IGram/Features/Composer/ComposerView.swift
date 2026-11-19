@@ -21,6 +21,8 @@ struct ComposerView: View {
     @State private var isKeyboardVisible = true
     @State private var isScheduling = false
     @State private var voice = VoiceRecordingModel()
+    @State private var stickers = StickerLibrary()
+    @State private var isShowingPanel = false
     @State private var scheduleDate = Date.now
 
     var body: some View {
@@ -99,6 +101,7 @@ struct ComposerView: View {
                         text: $model.text,
                         placeholder: placeholder,
                         focusRequest: model.focusRequest,
+                        insertion: model.insertion,
                         onSubmit: { model.submit() },
                         onEditLast: editLastMessage,
                         onCancel: { model.cancelMode() },
@@ -106,6 +109,22 @@ struct ComposerView: View {
                         height: $fieldHeight
                     )
                     .frame(height: fieldHeight)
+                }
+
+                Button {
+                    isShowingPanel.toggle()
+                } label: {
+                    Image(systemName: "face.smiling")
+                        .font(.title3)
+                        .frame(width: 30, height: 30)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
+                .help("Emoji, stickers and GIFs")
+                .popover(isPresented: $isShowingPanel, arrowEdge: .top) {
+                    TabbedSelector(chatId: chat.id, composer: model, library: stickers) {
+                        isShowingPanel = false
+                    }
                 }
 
                 if case .replyMarkupShowKeyboard = keyboardMessage?.replyMarkup {

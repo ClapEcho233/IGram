@@ -73,6 +73,8 @@ final class ComposerModel {
     var errorMessage: String?
     /// Incremented to ask the text view to take keyboard focus.
     private(set) var focusRequest = 0
+    /// Text to insert at the cursor (emoji from the panel), applied by the text view.
+    private(set) var insertion: (text: String, token: Int)?
 
     @ObservationIgnored private let session: TelegramSession
     @ObservationIgnored private var lastTypingSent: Date = .distantPast
@@ -140,6 +142,24 @@ final class ComposerModel {
     }
 
     func focus() { focusRequest += 1 }
+
+    func insert(_ string: String) {
+        insertion = (string, (insertion?.token ?? 0) + 1)
+    }
+
+    /// Sends an inline bot result, such as a GIF found through @gif.
+    func sendInlineResult(queryId: TdInt64, resultId: String) async throws {
+        _ = try await session.api.sendInlineQueryResultMessage(
+            chatId: chatId,
+            hideViaBot: false,
+            options: nil,
+            queryId: queryId,
+            replyTo: replyTarget.map(Self.replyReference),
+            resultId: resultId,
+            topicId: nil
+        )
+        if case .reply = mode { mode = .compose }
+    }
 
     // MARK: - Sending
 

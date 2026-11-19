@@ -15,6 +15,7 @@ struct ComposerTextView: NSViewRepresentable {
     @Binding var text: String
     var placeholder: String
     var focusRequest: Int
+    var insertion: (text: String, token: Int)?
     var maxHeight: CGFloat = 180
     var onSubmit: () -> Void
     var onEditLast: () -> Bool
@@ -71,6 +72,11 @@ struct ComposerTextView: NSViewRepresentable {
             textView.placeholder = placeholder
             textView.needsDisplay = true
         }
+        if let insertion, context.coordinator.lastInsertion != insertion.token {
+            context.coordinator.lastInsertion = insertion.token
+            textView.insertText(insertion.text, replacementRange: textView.selectedRange())
+            textView.window?.makeFirstResponder(textView)
+        }
         if context.coordinator.lastFocusRequest != focusRequest {
             context.coordinator.lastFocusRequest = focusRequest
             DispatchQueue.main.async { textView.window?.makeFirstResponder(textView) }
@@ -81,6 +87,7 @@ struct ComposerTextView: NSViewRepresentable {
         var parent: ComposerTextView
         weak var textView: InputTextView?
         var lastFocusRequest: Int
+        var lastInsertion = 0
 
         init(_ parent: ComposerTextView) {
             self.parent = parent
