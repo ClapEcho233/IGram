@@ -114,4 +114,44 @@ struct HistoryLayoutTests {
         #expect(entry.contains(2))
         #expect(!entry.contains(3))
     }
+
+    @Test func sectionsSplitAtDayHeaders() {
+        let entries = layout([
+            message(1),
+            message(2, at: 60),
+            message(3, at: 86_400),
+        ])
+        let sections = HistoryLayout.sections(from: entries)
+        #expect(sections.count == 2)
+        #expect(sections.map(\.entries.count) == [2, 1])
+        #expect(sections.allSatisfy { $0.date != nil })
+        #expect(Set(sections.map(\.id)).count == 2)
+        // Headers become section dates rather than rows.
+        #expect(!sections.flatMap(\.entries).contains { if case .day = $0 { true } else { false } })
+    }
+
+    @Test func rowsBeforeTheFirstDayGetAnUndatedSection() {
+        let sections = HistoryLayout.sections(from: [.unread])
+        #expect(sections.count == 1)
+        #expect(sections[0].date == nil)
+    }
+}
+
+struct JumboEmojiTests {
+    @Test func countsShortEmojiOnlyText() {
+        #expect(JumboEmoji.count(in: "👍") == 1)
+        #expect(JumboEmoji.count(in: "😂😂") == 2)
+        #expect(JumboEmoji.count(in: " ❤️ 🔥 👀 ") == 3)
+        #expect(JumboEmoji.count(in: "👨‍👩‍👧‍👦") == 1)
+        #expect(JumboEmoji.count(in: "👍🏽") == 1)
+        #expect(JumboEmoji.count(in: "1️⃣") == 1)
+    }
+
+    @Test func rejectsTextAndLongRuns() {
+        #expect(JumboEmoji.count(in: "") == nil)
+        #expect(JumboEmoji.count(in: "ok 👍") == nil)
+        #expect(JumboEmoji.count(in: "1") == nil)
+        #expect(JumboEmoji.count(in: "©") == nil)
+        #expect(JumboEmoji.count(in: "😀😀😀😀") == nil)
+    }
 }

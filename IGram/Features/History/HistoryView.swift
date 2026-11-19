@@ -21,24 +21,34 @@ struct HistoryView: View {
     @Environment(\.colorScheme) private var colorScheme
     @AppStorage(AppPreferences.chatPreset) private var presetValue = ChatThemePreset.default.rawValue
     @State private var position = ScrollPosition(idType: String.self)
+    @State private var scrollActivity = HistoryScrollActivity()
     @State private var isNearBottom = true
     @State private var highlightedMessageId: Int64?
 
     var body: some View {
-        let entries = HistoryLayout.entries(for: history.messages, lastReadInboxMessageId: unreadAnchor)
+        let entries = history.entries(lastReadInboxMessageId: unreadAnchor)
+        let sections = history.sections(lastReadInboxMessageId: unreadAnchor)
         ScrollView {
-            LazyVStack(spacing: 0) {
+            LazyVStack(spacing: 0, pinnedViews: .sectionHeaders) {
                 if history.didLoadInitial, history.hasMoreOlder {
                     pagingIndicator
                         .task(id: history.messages.first?.id) { await history.loadOlder() }
                 }
-                ForEach(entries) { entry in
-                    HistoryEntryView(
-                        entry: entry,
-                        chat: chat,
-                        history: history,
-                        highlightedMessageId: highlightedMessageId
-                    )
+                ForEach(sections) { section in
+                    Section {
+                        ForEach(section.entries) { entry in
+                            HistoryEntryView(
+                                entry: entry,
+                                chat: chat,
+                                history: history,
+                                highlightedMessageId: highlightedMessageId
+                            )
+                        }
+                    } header: {
+                        if let date = section.date {
+                            DayHeader(date: date)
+                        }
+                    }
                 }
                 if history.hasMoreNewer {
                     pagingIndicator
@@ -52,6 +62,10 @@ struct HistoryView: View {
         .scrollPosition($position)
         .defaultScrollAnchor(.bottom)
         .scrollEdgeEffectStyle(.soft, for: .vertical)
+        .onScrollPhaseChange { _, phase in
+            scrollActivity.update(isScrolling: phase != .idle)
+        }
+        .environment(scrollActivity)
         .onScrollGeometryChange(for: Bool.self) { geometry in
             geometry.contentSize.height - geometry.visibleRect.maxY < 160
         } action: { _, nearBottom in
@@ -118,8 +132,9 @@ struct HistoryView: View {
         } label: {
             Image(systemName: "chevron.down")
                 .font(.title3.weight(.semibold))
+                .foregroundStyle(.secondary)
                 .frame(width: 40, height: 40)
-                .background(.regularMaterial, in: .circle)
+                .glassEffect(.regular.interactive(), in: .circle)
                 .overlay(alignment: .top) {
                     if chat.unreadCount > 0 {
                         UnreadBadge(count: chat.unreadCount, isMuted: false)
@@ -168,6 +183,31 @@ struct HistoryView: View {
     }
 }
 
+/// Whether the history is scrolling. Animated stickers pause meanwhile, so
+/// their frames don't compete with scrolling for the main thread; only the
+/// stickers read this, so a scroll doesn't re-render the whole history.
+@Observable
+final class HistoryScrollActivity {
+    private(set) var isScrolling = false
+    @ObservationIgnored private var resumeTask: Task<Void, Never>?
+
+    /// Pauses at once but resumes only after a short quiet period: a mouse
+    /// wheel reports idle between notches, and restarting stickers each time
+    /// costs more than it saves.
+    func update(isScrolling scrolling: Bool) {
+        resumeTask?.cancel()
+        if scrolling {
+            if !isScrolling { isScrolling = true }
+            return
+        }
+        resumeTask = Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(450))
+            guard !Task.isCancelled else { return }
+            self?.isScrolling = false
+        }
+    }
+}
+
 /// A round corner button with a counter, used for unread mentions and reactions.
 private struct UnreadJumpButton: View {
     let systemImage: String
@@ -181,8 +221,9 @@ private struct UnreadJumpButton: View {
         } label: {
             Image(systemName: systemImage)
                 .font(.title3.weight(.semibold))
+                .foregroundStyle(.tint)
                 .frame(width: 40, height: 40)
-                .background(.regularMaterial, in: .circle)
+                .glassEffect(.regular.interactive(), in: .circle)
                 .overlay(alignment: .top) {
                     UnreadBadge(count: count).offset(y: -12)
                 }

@@ -19,7 +19,9 @@ final class HistoryModel {
     /// The forum topic shown, or `nil` for the whole chat.
     let topicId: Int?
 
-    private(set) var messages: [ChatMessage] = []
+    private(set) var messages: [ChatMessage] = [] {
+        didSet { messagesVersion &+= 1 }
+    }
     private(set) var didLoadInitial = false
     private(set) var isLoadingOlder = false
     private(set) var isLoadingNewer = false
@@ -44,6 +46,8 @@ final class HistoryModel {
     @ObservationIgnored private var pendingViews: Set<Int64> = []
     @ObservationIgnored private var viewFlushTask: Task<Void, Never>?
     @ObservationIgnored private var isOpen = false
+    @ObservationIgnored private var messagesVersion = 0
+    @ObservationIgnored private var cachedRows: (version: Int, anchor: Int64?, entries: [HistoryEntry], sections: [HistorySection])?
 
     static let pageSize = 50
 
@@ -51,6 +55,27 @@ final class HistoryModel {
         self.chatId = chatId
         self.topicId = topicId
         self.client = client
+    }
+
+    /// The rows to show, rebuilt only when the messages change: the history
+    /// view's body also runs for scroll-position and highlight changes.
+    func entries(lastReadInboxMessageId: Int64?) -> [HistoryEntry] {
+        rows(lastReadInboxMessageId: lastReadInboxMessageId).entries
+    }
+
+    /// The rows grouped by day, for pinned date headers.
+    func sections(lastReadInboxMessageId: Int64?) -> [HistorySection] {
+        rows(lastReadInboxMessageId: lastReadInboxMessageId).sections
+    }
+
+    private func rows(lastReadInboxMessageId: Int64?) -> (entries: [HistoryEntry], sections: [HistorySection]) {
+        if let cached = cachedRows, cached.version == messagesVersion, cached.anchor == lastReadInboxMessageId {
+            return (cached.entries, cached.sections)
+        }
+        let entries = HistoryLayout.entries(for: messages, lastReadInboxMessageId: lastReadInboxMessageId)
+        let sections = HistoryLayout.sections(from: entries)
+        cachedRows = (messagesVersion, lastReadInboxMessageId, entries, sections)
+        return (entries, sections)
     }
 
     /// The topic as TDLib addresses it in requests and messages.

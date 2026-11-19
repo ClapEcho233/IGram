@@ -16,9 +16,7 @@ struct HistoryEntryView: View {
     var body: some View {
         switch entry {
         case .day(let date):
-            ServiceCapsule(text: DateFormatting().daySeparator(date), isHeader: true)
-                .padding(.top, 14)
-                .padding(.bottom, 6)
+            DayHeader(date: date)
         case .unread:
             UnreadSeparator()
         case .message(let messageEntry):
@@ -46,6 +44,27 @@ struct MessageRow: View {
     private var message: ChatMessage { entry.primary }
     private var isOutgoingStyle: Bool { message.isOutgoing && !chat.isChannel }
     private var showsAvatarColumn: Bool { chat.isGroup && !message.isOutgoing }
+    /// Whether parts of the bubble stretch to whatever width they get (reply
+    /// quotes, attachment footers, link previews, bot keyboards). Only then
+    /// does the bubble's width need the costlier ideal-size measurement.
+    private var hasInlineKeyboard: Bool {
+        if case .replyMarkupInlineKeyboard = entry.captionMessage.replyMarkup { return true }
+        return false
+    }
+
+    private var hasStretchingParts: Bool {
+        if message.replyTo != nil || hasInlineKeyboard { return true }
+        switch message.content {
+        case .messageText(let value):
+            return value.linkPreview != nil
+        case .messagePhoto, .messageVideo, .messageAnimation, .messageSticker,
+             .messageAnimatedEmoji, .messageDice, .messageVideoNote:
+            return false
+        default:
+            return true
+        }
+    }
+
     /// Messages shows group senders as a small caption above the first bubble.
     private var showsSenderCaption: Bool {
         theme.isSystem && MessageBubble.showsSenderName(entry: entry, chat: chat)
@@ -79,7 +98,7 @@ struct MessageRow: View {
                         }
                     }
                     // Hug short messages, wrap long ones at a comfortable width.
-                    HuggingWidthLayout(maxWidth: 560) {
+                    HuggingWidthLayout(maxWidth: 560, measuresIdealWidth: hasStretchingParts) {
                         VStack(alignment: isOutgoingStyle ? .trailing : .leading, spacing: 3) {
                             if showsSenderCaption {
                                 Text(session.displayName(message.senderId))
@@ -88,7 +107,7 @@ struct MessageRow: View {
                                     .lineLimit(1)
                                     .padding(.horizontal, 12)
                             }
-                            MessageBubble(entry: entry, chat: chat, history: history)
+                            MessageBubble(entry: entry, chat: chat, history: history, fillsWidth: hasInlineKeyboard)
                                 .contextMenu {
                                     MessageContextMenu(entry: entry, chat: chat, history: history)
                                 }
@@ -132,19 +151,17 @@ struct MessageRow: View {
     }
 }
 
-/// Service messages and day headers: a centered caption on the plain
-/// Messages background, or tdesktop's translucent capsule over a wallpaper.
+/// Service messages: a centered caption on the plain Messages background, or
+/// tdesktop's translucent capsule over a wallpaper.
 struct ServiceCapsule: View {
     let text: String
-    /// Day headers are slightly more prominent than service messages.
-    var isHeader = false
 
     @Environment(\.chatThemeStyle) private var theme
 
     var body: some View {
         if theme.isSystem {
             Text(text)
-                .font(isHeader ? .caption.weight(.semibold) : .caption)
+                .font(.caption)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
@@ -152,7 +169,7 @@ struct ServiceCapsule: View {
                 .frame(maxWidth: .infinity)
         } else {
             Text(text)
-                .font(isHeader ? .callout.weight(.medium) : .callout)
+                .font(.callout)
                 .foregroundStyle(.white)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 10)
@@ -160,6 +177,37 @@ struct ServiceCapsule: View {
                 .background(ChatTheme.serviceBackground, in: .capsule)
                 .frame(maxWidth: .infinity)
         }
+    }
+}
+
+/// The date above a day of messages, pinned to the top while that day
+/// scrolls by: a glass pill on the plain Messages background, tdesktop's
+/// translucent capsule over a wallpaper.
+struct DayHeader: View {
+    let date: Date
+
+    @Environment(\.chatThemeStyle) private var theme
+
+    var body: some View {
+        let label = Text(DateFormatting().daySeparator(date))
+            .font(.caption.weight(.semibold))
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+        Group {
+            if theme.isSystem {
+                label
+                    .foregroundStyle(.secondary)
+                    .glassEffect(.regular, in: .capsule)
+            } else {
+                label
+                    .foregroundStyle(.white)
+                    .background(ChatTheme.serviceBackground, in: .capsule)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, 10)
+        .padding(.bottom, 6)
+        .accessibilityAddTraits(.isHeader)
     }
 }
 
@@ -188,17 +236,40 @@ private struct UnreadSeparator: View {
 /// Lays out one child at its ideal width, capped by `maxWidth` and the offered
 /// width, so a bubble hugs a short message but wraps a long one instead of
 /// overflowing the row (which `fixedSize` would do).
+///
+/// Measuring text is the most expensive part of scrolling the history, so
+/// the width and the heights per width are cached until the row changes, the
+/// zero-width probe stacks make never lays text out a glyph per line, and
+/// rows without stretching parts are measured once, at `maxWidth`, instead
+/// of also at their unconstrained single-line size.
 struct HuggingWidthLayout: Layout {
     var maxWidth: CGFloat
+    /// Set when parts of the child fill any width offered, so one measurement
+    /// at `maxWidth` can't tell how wide the rest of it is.
+    var measuresIdealWidth = true
 
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        guard let child = subviews.first else { return .zero }
-        let width = width(for: proposal, child: child)
-        let height = child.sizeThatFits(ProposedViewSize(width: width, height: nil)).height
-        return CGSize(width: width, height: height)
+    struct Cache {
+        var fittedWidth: CGFloat?
+        var heights: [CGFloat: CGFloat] = [:]
     }
 
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+    func makeCache(subviews: Subviews) -> Cache { Cache() }
+
+    func updateCache(_ cache: inout Cache, subviews: Subviews) {
+        cache = Cache()
+    }
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout Cache) -> CGSize {
+        guard let child = subviews.first else { return .zero }
+        let fitted = fittedWidth(child: child, cache: &cache)
+        let width = min(fitted, proposal.width ?? fitted)
+        // Stacks probe with a zero width to learn how far a child can shrink;
+        // answer with the real height rather than laying out a 0-pt column.
+        let height = self.height(at: width < 1 ? fitted : width, child: child, cache: &cache)
+        return CGSize(width: max(0, width), height: height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout Cache) {
         subviews.first?.place(
             at: bounds.origin,
             anchor: .topLeading,
@@ -206,9 +277,29 @@ struct HuggingWidthLayout: Layout {
         )
     }
 
-    private func width(for proposal: ProposedViewSize, child: LayoutSubview) -> CGFloat {
-        let limit = min(maxWidth, proposal.width ?? maxWidth)
-        let ideal = child.sizeThatFits(.unspecified).width
-        return max(0, min(limit, ideal))
+    /// The width the child hugs, at most `maxWidth`.
+    private func fittedWidth(child: LayoutSubview, cache: inout Cache) -> CGFloat {
+        if let width = cache.fittedWidth { return width }
+        let capped = child.sizeThatFits(ProposedViewSize(width: maxWidth, height: nil))
+        // Round up: offering text exactly its measured width can rewrap it.
+        var width = min(maxWidth, capped.width.rounded(.up))
+        if width >= maxWidth - 0.5 {
+            cache.heights[maxWidth.rounded()] = capped.height
+            if measuresIdealWidth {
+                width = min(maxWidth, child.sizeThatFits(.unspecified).width.rounded(.up))
+            }
+        } else {
+            cache.heights[width.rounded()] = capped.height
+        }
+        cache.fittedWidth = width
+        return width
+    }
+
+    private func height(at width: CGFloat, child: LayoutSubview, cache: inout Cache) -> CGFloat {
+        let key = width.rounded()
+        if let height = cache.heights[key] { return height }
+        let height = child.sizeThatFits(ProposedViewSize(width: width, height: nil)).height
+        cache.heights[key] = height
+        return height
     }
 }

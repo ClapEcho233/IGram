@@ -23,6 +23,22 @@ nonisolated enum ImagePipeline {
         return cache
     }()
 
+    nonisolated(unsafe) private static let minithumbnails: NSCache<NSData, Box> = {
+        let cache = NSCache<NSData, Box>()
+        cache.countLimit = 500
+        return cache
+    }()
+
+    /// A decoded minithumbnail; the same few hundred bytes are drawn by every
+    /// placeholder render, so decode each once.
+    static func minithumbnail(_ data: Data) -> CGImage? {
+        let key = data as NSData
+        if let cached = minithumbnails.object(forKey: key) { return cached.image }
+        guard let image = decode(data, maxPixelSize: 64) else { return nil }
+        minithumbnails.setObject(Box(image), forKey: key)
+        return image
+    }
+
     private static func key(_ url: URL, _ maxPixelSize: Int) -> NSString {
         "\(url.path(percentEncoded: false))#\(maxPixelSize)" as NSString
     }

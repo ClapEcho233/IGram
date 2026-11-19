@@ -67,7 +67,8 @@ xcodebuild -project IGram.xcodeproj -scheme IGram -destination 'platform=macOS' 
   context menu to pin, mute, archive, mark read or unread, delete or leave
 - History: Messages-style blue and gray bubbles with tails on the window
   background by default (tdesktop's wallpaper themes remain under Appearance),
-  grouped like tdesktop, day headers, unread bar, replies and
+  grouped like tdesktop, day headers that stay pinned while scrolling, large
+  emoji-only messages, sent and read checks, unread bar, replies and
   forwards, opening at the first unread message, jumping to any message,
   reactions, and a context menu to reply, edit, copy, copy link, pin, forward,
   save and delete
@@ -97,7 +98,7 @@ xcodebuild -project IGram.xcodeproj -scheme IGram -destination 'platform=macOS' 
   management, folder editor, forum topics, privacy and two-step verification,
   proxies, full `t.me`/`tg://` deep link routing (including invite links and
   message links), up to three accounts with cross-account notifications and
-  Dock badge, and Simplified Chinese (655 strings)
+  Dock badge, and Simplified Chinese (656 strings)
 
 ## Not yet implemented
 

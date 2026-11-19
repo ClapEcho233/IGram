@@ -17,6 +17,7 @@ struct InlineKeyboardView: View {
     @Environment(MainModel.self) private var main
     @Environment(ComposerModel.self) private var composer: ComposerModel?
     @Environment(\.openURL) private var openURL
+    @Environment(\.chatThemeStyle) private var theme
     @State private var pendingButton: String?
 
     var body: some View {
@@ -31,7 +32,7 @@ struct InlineKeyboardView: View {
                             ZStack(alignment: .topTrailing) {
                                 Group {
                                     if pendingButton == key {
-                                        ProgressView().controlSize(.small).tint(.white)
+                                        ProgressView().controlSize(.small).tint(theme.isSystem ? nil : .white)
                                     } else {
                                         Text(button.text)
                                             .font(.callout.weight(.medium))
@@ -46,8 +47,8 @@ struct InlineKeyboardView: View {
                                         .padding(4)
                                 }
                             }
-                            .foregroundStyle(.white)
-                            .background(ChatTheme.serviceBackground, in: .rect(cornerRadius: 8))
+                            .foregroundStyle(theme.isSystem ? AnyShapeStyle(.tint) : AnyShapeStyle(.white))
+                            .background(buttonBackground, in: .rect(cornerRadius: theme.isSystem ? 12 : 8, style: .continuous))
                             .contentShape(.rect)
                         }
                         .buttonStyle(.plain)
@@ -57,6 +58,12 @@ struct InlineKeyboardView: View {
             }
         }
         .frame(minWidth: 240, maxWidth: 520)
+    }
+
+    /// Gray like an incoming bubble with tinted titles in the Messages style;
+    /// tdesktop's translucent service color over a wallpaper.
+    private var buttonBackground: AnyShapeStyle {
+        theme.isSystem ? theme.bubbleStyle(outgoing: false) : AnyShapeStyle(ChatTheme.serviceBackground)
     }
 
     private func press(_ button: InlineKeyboardButton, key: String) {

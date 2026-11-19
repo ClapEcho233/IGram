@@ -51,10 +51,8 @@ struct MessageFooter: View {
             Image(systemName: "exclamationmark.circle.fill").foregroundStyle(.red)
         } else if message.isSending {
             Image(systemName: "clock")
-        } else if message.id <= chat.lastReadOutboxMessageId {
-            Image(systemName: "checkmark.message.fill")
         } else {
-            Image(systemName: "checkmark")
+            DeliveryChecks(isRead: message.id <= chat.lastReadOutboxMessageId)
         }
     }
 
@@ -72,5 +70,22 @@ struct MessageFooter: View {
 
     static func compact(_ count: Int) -> String {
         count.formatted(.number.notation(.compactName))
+    }
+}
+
+/// tdesktop's delivery marks: one check once sent, two once read.
+struct DeliveryChecks: View {
+    let isRead: Bool
+
+    var body: some View {
+        HStack(spacing: -5) {
+            Image(systemName: "checkmark")
+            if isRead {
+                Image(systemName: "checkmark")
+            }
+        }
+        .fontWeight(.semibold)
+        .accessibilityElement()
+        .accessibilityLabel(isRead ? Text("Read") : Text("Sent"))
     }
 }

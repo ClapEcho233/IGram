@@ -4797,6 +4797,16 @@
         }
       }
     },
+    "Sent" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已发送"
+          }
+        }
+      }
+    },
     "Server" : {
       "localizations" : {
         "zh-Hans" : {

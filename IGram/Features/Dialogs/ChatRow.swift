@@ -112,8 +112,8 @@ struct ChatRow: View {
                     .font(.caption)
                     .foregroundStyle(.red)
             case nil:
-                Image(systemName: message.id <= chat.lastReadOutboxMessageId ? "checkmark.message" : "checkmark")
-                    .font(.caption2.weight(.semibold))
+                DeliveryChecks(isRead: message.id <= chat.lastReadOutboxMessageId)
+                    .font(.caption2)
                     .foregroundStyle(.tint)
             }
         }

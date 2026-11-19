@@ -49,7 +49,7 @@ struct MinithumbnailView: View {
     let minithumbnail: Minithumbnail?
 
     var body: some View {
-        if let minithumbnail, let image = ImagePipeline.decode(minithumbnail.data, maxPixelSize: 64) {
+        if let minithumbnail, let image = ImagePipeline.minithumbnail(minithumbnail.data) {
             Image(decorative: image, scale: 1)
                 .resizable()
                 .aspectRatio(contentMode: .fill)

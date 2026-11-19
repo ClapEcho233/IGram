@@ -13,6 +13,9 @@ struct MessageBubble: View {
     let entry: MessageEntry
     let chat: ChatItem
     let history: HistoryModel
+    /// Stretches the bubble to the row's width, so it lines up with the bot
+    /// keyboard attached below it.
+    var fillsWidth = false
 
     @Environment(TelegramSession.self) private var session
     @Environment(MainModel.self) private var main
@@ -43,6 +46,7 @@ struct MessageBubble: View {
                     .padding(.bottom, 7)
             }
         }
+        .frame(maxWidth: fillsWidth ? .infinity : nil, alignment: .leading)
         .foregroundStyle(theme.primaryText(outgoing: isOutgoingStyle))
         .background(theme.bubbleStyle(outgoing: isOutgoingStyle), in: shape)
         .clipShape(shape)
@@ -76,8 +80,17 @@ struct MessageBubble: View {
     private var isStandalone: Bool {
         switch message.content {
         case .messageSticker, .messageAnimatedEmoji, .messageDice, .messageVideoNote: true
+        case .messageText: jumboEmojiCount != nil
         default: false
         }
+    }
+
+    /// One to three emoji sent on their own show large and without a bubble,
+    /// as in Messages and Telegram.
+    private var jumboEmojiCount: Int? {
+        guard case .messageText(let value) = message.content, value.linkPreview == nil,
+              value.text.entities.isEmpty else { return nil }
+        return JumboEmoji.count(in: value.text.text)
     }
 
     private var standaloneBody: some View {
@@ -137,6 +150,11 @@ struct MessageBubble: View {
             .padding(.bottom, 18)
         case .messageVideoNote(let value):
             VideoNoteView(videoNote: value.videoNote)
+        case .messageText(let value):
+            Text(value.text.text.trimmingCharacters(in: .whitespacesAndNewlines))
+                .font(.system(size: JumboEmoji.pointSize(forCount: jumboEmojiCount ?? 1)))
+                .padding(.bottom, 18)
+                .padding(.horizontal, 2)
         default:
             EmptyView()
         }
@@ -411,27 +429,79 @@ struct BubbleTail: Shape {
 struct FirstChildWidthStack: Layout {
     var spacing: CGFloat = 0
 
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let width = width(for: proposal, subviews: subviews)
-        let heights = subviews.map { $0.sizeThatFits(ProposedViewSize(width: width, height: nil)).height }
+    struct Cache {
+        var idealWidth: CGFloat?
+        var heights: [CGFloat: [CGFloat]] = [:]
+    }
+
+    func makeCache(subviews: Subviews) -> Cache { Cache() }
+
+    func updateCache(_ cache: inout Cache, subviews: Subviews) {
+        cache = Cache()
+    }
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout Cache) -> CGSize {
+        let width = width(for: proposal, subviews: subviews, cache: &cache)
+        let heights = heights(at: width, subviews: subviews, cache: &cache)
         let total = heights.reduce(0, +) + spacing * CGFloat(max(subviews.count - 1, 0))
         return CGSize(width: width, height: total)
     }
 
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout Cache) {
+        let heights = heights(at: bounds.width, subviews: subviews, cache: &cache)
         var y = bounds.minY
-        for subview in subviews {
-            let proposal = ProposedViewSize(width: bounds.width, height: nil)
-            let height = subview.sizeThatFits(proposal).height
+        for (subview, height) in zip(subviews, heights) {
             subview.place(at: CGPoint(x: bounds.minX, y: y), anchor: .topLeading, proposal: ProposedViewSize(width: bounds.width, height: height))
             y += height + spacing
         }
     }
 
-    private func width(for proposal: ProposedViewSize, subviews: Subviews) -> CGFloat {
+    private func width(for proposal: ProposedViewSize, subviews: Subviews, cache: inout Cache) -> CGFloat {
         guard let first = subviews.first else { return 0 }
-        let ideal = first.sizeThatFits(.unspecified).width
-        guard let offered = proposal.width else { return ideal }
+        let ideal = cache.idealWidth ?? first.sizeThatFits(.unspecified).width
+        cache.idealWidth = ideal
+        guard let offered = proposal.width, offered >= 1 else { return ideal }
         return min(ideal, offered)
+    }
+
+    private func heights(at width: CGFloat, subviews: Subviews, cache: inout Cache) -> [CGFloat] {
+        let key = width.rounded()
+        if let heights = cache.heights[key] { return heights }
+        let heights = subviews.map { $0.sizeThatFits(ProposedViewSize(width: width, height: nil)).height }
+        cache.heights[key] = heights
+        return heights
+    }
+}
+
+/// Detects messages that are only a few emoji, shown large like Messages does.
+nonisolated enum JumboEmoji {
+    static let maximumCount = 3
+
+    /// The number of emoji when `text` is one to three emoji (spaces aside),
+    /// otherwise `nil`.
+    static func count(in text: String) -> Int? {
+        var count = 0
+        for character in text where !character.isWhitespace {
+            guard isEmoji(character) else { return nil }
+            count += 1
+            if count > maximumCount { return nil }
+        }
+        return count > 0 ? count : nil
+    }
+
+    /// Emoji presentation by default, or an emoji sequence (variation
+    /// selector, keycap, skin tone, ZWJ). Digits and © alone are text.
+    static func isEmoji(_ character: Character) -> Bool {
+        guard let first = character.unicodeScalars.first else { return false }
+        if first.properties.isEmojiPresentation { return true }
+        return first.properties.isEmoji && character.unicodeScalars.count > 1
+    }
+
+    static func pointSize(forCount count: Int) -> CGFloat {
+        switch count {
+        case 1: 64
+        case 2: 52
+        default: 44
+        }
     }
 }
