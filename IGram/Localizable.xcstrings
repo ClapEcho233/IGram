@@ -376,6 +376,9 @@
     "%@:%lld" : {
       "shouldTranslate" : false
     },
+    "%lld" : {
+      "shouldTranslate" : false
+    },
     "%lld blocked…" : {
       "localizations" : {
         "zh-Hans" : {
@@ -442,6 +445,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$lld 人%2$@…"
+          }
+        }
+      }
+    },
+    "%lld stickers" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 个贴纸"
           }
         }
       }
@@ -662,6 +675,16 @@
         }
       }
     },
+    "Add %lld Stickers" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加 %lld 个贴纸"
+          }
+        }
+      }
+    },
     "Add Account" : {
       "localizations" : {
         "zh-Hans" : {
@@ -802,6 +825,26 @@
         }
       }
     },
+    "Allow" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "允许"
+          }
+        }
+      }
+    },
+    "Allow %@ to message you?" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "允许 %@ 向您发送消息？"
+          }
+        }
+      }
+    },
     "Animals & Nature" : {
       "localizations" : {
         "zh-Hans" : {
@@ -878,6 +921,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已归档聊天"
+          }
+        }
+      }
+    },
+    "Arctic" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "极地"
           }
         }
       }
@@ -988,6 +1041,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已屏蔽用户"
+          }
+        }
+      }
+    },
+    "Blur wallpaper" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "模糊背景"
+          }
+        }
+      }
+    },
+    "Bot approval is required to join this chat." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "加入此对话需要机器人批准。"
           }
         }
       }
@@ -1122,6 +1195,16 @@
         }
       }
     },
+    "Changes that you made may not be saved." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "您所做的更改可能不会被保存。"
+          }
+        }
+      }
+    },
     "Change…" : {
       "localizations" : {
         "zh-Hans" : {
@@ -1212,6 +1295,26 @@
         }
       }
     },
+    "Chat Theme" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "对话主题"
+          }
+        }
+      }
+    },
+    "Chat Wallpaper" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "对话背景"
+          }
+        }
+      }
+    },
     "Chat history visible to new members" : {
       "localizations" : {
         "zh-Hans" : {
@@ -1242,12 +1345,32 @@
         }
       }
     },
+    "Checking invite link…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在检查邀请链接…"
+          }
+        }
+      }
+    },
     "Checklist" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "清单"
+          }
+        }
+      }
+    },
+    "Choose Photo…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择照片…"
           }
         }
       }
@@ -1268,6 +1391,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "选择国家或地区"
+          }
+        }
+      }
+    },
+    "Classic" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "经典"
           }
         }
       }
@@ -1312,12 +1445,52 @@
         }
       }
     },
+    "Close" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关闭"
+          }
+        }
+      }
+    },
+    "Close %@?" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关闭 %@？"
+          }
+        }
+      }
+    },
+    "Close Anyway" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仍然关闭"
+          }
+        }
+      }
+    },
     "Close Chat" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "关闭聊天"
+          }
+        }
+      }
+    },
+    "Close Friends" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "密友"
           }
         }
       }
@@ -1442,6 +1615,16 @@
         }
       }
     },
+    "Copy Link" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "复制链接"
+          }
+        }
+      }
+    },
     "Copy Message Link" : {
       "localizations" : {
         "zh-Hans" : {
@@ -1462,12 +1645,32 @@
         }
       }
     },
+    "Couldn't Open Web App" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法打开小程序"
+          }
+        }
+      }
+    },
     "Couldn't Start" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "无法启动"
+          }
+        }
+      }
+    },
+    "Couldn't open this Web App." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法打开此小程序。"
           }
         }
       }
@@ -1552,6 +1755,16 @@
         }
       }
     },
+    "Day Blue" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "日间蓝"
+          }
+        }
+      }
+    },
     "Declined call" : {
       "localizations" : {
         "zh-Hans" : {
@@ -1568,6 +1781,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已拒绝的视频通话"
+          }
+        }
+      }
+    },
+    "Default" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "默认"
           }
         }
       }
@@ -1618,6 +1841,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "删除群组"
+          }
+        }
+      }
+    },
+    "Delete Story" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除动态"
           }
         }
       }
@@ -1718,6 +1951,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "为所有人删除此群组？"
+          }
+        }
+      }
+    },
+    "Delete this story?" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除这条动态？"
           }
         }
       }
@@ -2235,6 +2478,16 @@
     "HTTP" : {
       "shouldTranslate" : false
     },
+    "Hey! How does this look?" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "嘿！这个主题看起来怎么样？"
+          }
+        }
+      }
+    },
     "Hide bot keyboard" : {
       "localizations" : {
         "zh-Hans" : {
@@ -2358,6 +2611,16 @@
         }
       }
     },
+    "Invalid Invite Link" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "邀请链接无效"
+          }
+        }
+      }
+    },
     "Invalid code. Please try again." : {
       "localizations" : {
         "zh-Hans" : {
@@ -2448,6 +2711,16 @@
         }
       }
     },
+    "Join request sent" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已发送加入申请"
+          }
+        }
+      }
+    },
     "Keyboard" : {
       "localizations" : {
         "zh-Hans" : {
@@ -2528,12 +2801,32 @@
         }
       }
     },
+    "Link copied" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已复制链接"
+          }
+        }
+      }
+    },
     "Links" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "链接"
+          }
+        }
+      }
+    },
+    "Live Story" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "直播动态"
           }
         }
       }
@@ -2638,6 +2931,16 @@
         }
       }
     },
+    "Looks great on macOS!" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 macOS 上太好看了！"
+          }
+        }
+      }
+    },
     "MTProto" : {
       "shouldTranslate" : false
     },
@@ -2707,6 +3010,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "成员"
+          }
+        }
+      }
+    },
+    "Mentioned you in a story" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在动态中提到了您"
           }
         }
       }
@@ -2797,6 +3110,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "我的分组"
+          }
+        }
+      }
+    },
+    "My Story" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "我的动态"
           }
         }
       }
@@ -2947,6 +3270,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "下一个聊天"
+          }
+        }
+      }
+    },
+    "Next story" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下一条动态"
           }
         }
       }
@@ -3241,6 +3574,26 @@
         }
       }
     },
+    "Open App" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开应用"
+          }
+        }
+      }
+    },
+    "Open Chat" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开对话"
+          }
+        }
+      }
+    },
     "Open Fragment" : {
       "localizations" : {
         "zh-Hans" : {
@@ -3251,12 +3604,32 @@
         }
       }
     },
+    "Open in Browser" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在浏览器中打开"
+          }
+        }
+      }
+    },
     "Open my.telegram.org" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "打开 my.telegram.org"
+          }
+        }
+      }
+    },
+    "Opening Web App…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在打开小程序…"
           }
         }
       }
@@ -3541,6 +3914,16 @@
         }
       }
     },
+    "Previous story" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上一条动态"
+          }
+        }
+      }
+    },
     "Privacy" : {
       "localizations" : {
         "zh-Hans" : {
@@ -3641,6 +4024,16 @@
         }
       }
     },
+    "React — right-click for more" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "回应 — 右键查看更多"
+          }
+        }
+      }
+    },
     "Read" : {
       "localizations" : {
         "zh-Hans" : {
@@ -3711,6 +4104,16 @@
         }
       }
     },
+    "Reload" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重新加载"
+          }
+        }
+      }
+    },
     "Remove" : {
       "localizations" : {
         "zh-Hans" : {
@@ -3727,6 +4130,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "删除头像"
+          }
+        }
+      }
+    },
+    "Remove Reaction" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移除回应"
+          }
+        }
+      }
+    },
+    "Remove Stickers" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移除贴纸包"
           }
         }
       }
@@ -3801,6 +4224,16 @@
         }
       }
     },
+    "Reply sent" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "回复已发送"
+          }
+        }
+      }
+    },
     "Reply to %@" : {
       "localizations" : {
         "zh-Hans" : {
@@ -3811,12 +4244,52 @@
         }
       }
     },
+    "Reply to story…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "回复动态…"
+          }
+        }
+      }
+    },
+    "Request to Join" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "申请加入"
+          }
+        }
+      }
+    },
     "Resend code" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "重新发送验证码"
+          }
+        }
+      }
+    },
+    "Reset Custom Chat Wallpaper" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重置此对话背景"
+          }
+        }
+      }
+    },
+    "Reset to Default" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "恢复默认"
           }
         }
       }
@@ -4030,6 +4503,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在此聊天中搜索"
+          }
+        }
+      }
+    },
+    "Searching…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在搜索…"
           }
         }
       }
@@ -4364,6 +4847,16 @@
         }
       }
     },
+    "Settings" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "设置"
+          }
+        }
+      }
+    },
     "Settings…" : {
       "localizations" : {
         "zh-Hans" : {
@@ -4380,6 +4873,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "分享手机号码"
+          }
+        }
+      }
+    },
+    "Share your phone number with %@?" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "向 %@ 分享您的手机号码？"
           }
         }
       }
@@ -4544,12 +5047,42 @@
         }
       }
     },
+    "Sticker Pack Unavailable" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "贴纸包不可用"
+          }
+        }
+      }
+    },
     "Stickers" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "贴纸"
+          }
+        }
+      }
+    },
+    "Stickers added" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已添加贴纸包"
+          }
+        }
+      }
+    },
+    "Stickers removed" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已移除贴纸包"
           }
         }
       }
@@ -4584,6 +5117,16 @@
         }
       }
     },
+    "Story unavailable" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "动态不可用"
+          }
+        }
+      }
+    },
     "Symbols" : {
       "localizations" : {
         "zh-Hans" : {
@@ -4606,6 +5149,16 @@
     },
     "TDLib" : {
       "shouldTranslate" : false
+    },
+    "Tap to view" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "点击查看"
+          }
+        }
+      }
     },
     "Telegram will send login codes to this email address instead of SMS." : {
       "localizations" : {
@@ -4707,6 +5260,16 @@
         }
       }
     },
+    "The Web App couldn't be loaded." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法加载此小程序。"
+          }
+        }
+      }
+    },
     "The chat with “%@” will be deleted." : {
       "localizations" : {
         "zh-Hans" : {
@@ -4757,6 +5320,16 @@
         }
       }
     },
+    "This Telegram link isn't supported yet." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂不支持此 Telegram 链接。"
+          }
+        }
+      }
+    },
     "This account has been deleted." : {
       "localizations" : {
         "zh-Hans" : {
@@ -4777,12 +5350,32 @@
         }
       }
     },
+    "This bot wants permission to send you messages." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此机器人请求向您发送消息的权限。"
+          }
+        }
+      }
+    },
     "This button isn't supported in IGram yet." : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "IGram 暂不支持此按钮。"
+          }
+        }
+      }
+    },
+    "This invite link has expired or is invalid." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此邀请链接已过期或无效。"
           }
         }
       }
@@ -4813,6 +5406,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "暂不支持此登录步骤。"
+          }
+        }
+      }
+    },
+    "This sticker pack couldn't be loaded." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法加载此贴纸包。"
+          }
+        }
+      }
+    },
+    "This story isn't supported yet." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂不支持查看此动态。"
+          }
+        }
+      }
+    },
+    "Tinted" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "靛蓝"
           }
         }
       }
@@ -5277,6 +5900,16 @@
         }
       }
     },
+    "Web App" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "小程序"
+          }
+        }
+      }
+    },
     "Welcome to IGram" : {
       "localizations" : {
         "zh-Hans" : {
@@ -5423,6 +6056,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "您的聊天会保留在云端，此 Mac 上的本地数据将被删除。"
+          }
+        }
+      }
+    },
+    "Your join request was declined." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "您的加入申请已被拒绝。"
           }
         }
       }
@@ -5709,6 +6352,16 @@
     },
     "t.me/" : {
       "shouldTranslate" : false
+    },
+    "to %@" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "发给 %@"
+          }
+        }
+      }
     },
     "typing" : {
       "localizations" : {

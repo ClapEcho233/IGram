@@ -28,7 +28,7 @@ the [TDLibKit](https://github.com/Swiftgram/TDLibKit) Swift package.
 Run the unit tests with:
 
 ```bash
-xcodebuild -project IGram.xcodeproj -scheme IGram -destination 'platform=macOS' -only-testing:IGramTests test
+xcodebuild -project IGram.xcodeproj -scheme IGram -destination 'platform=macOS' -only-testing:IGramTests -testLanguage en test
 ```
 
 ## Architecture
@@ -49,9 +49,9 @@ xcodebuild -project IGram.xcodeproj -scheme IGram -destination 'platform=macOS' 
   ordered `AsyncStream`.
 - **TelegramSession** applies every update on the main actor and routes it to
   the stores: `PeerStore` (users, groups), `ChatStore` with ordered
-  `ChatListModel`s, `FileStore`, `ChatFolderStore`, and the `HistoryModel` of
-  each open chat. Stores hand out one `@Observable` item per entity, so a view
-  only refreshes when the thing it shows changes.
+  `ChatListModel`s, `FileStore`, `ChatFolderStore`, `ThemeStore`, `StoryStore`,
+  and the `HistoryModel` of each open chat. Stores hand out one `@Observable`
+  item per entity, so a view only refreshes when the thing it shows changes.
 - TDLib's generated models are immutable, so `ChatItem` and `ChatMessage` keep
   the fields TDLib patches after delivery.
 - TDLibKit declares types such as `Date`, `Text` and `Error`; the module-level
@@ -82,16 +82,21 @@ xcodebuild -project IGram.xcodeproj -scheme IGram -destination 'platform=macOS' 
   Chats menu (⌘0 Saved Messages, ⌘1–9 folders, ⌥⌘↑/↓ to switch chats)
 
 - Also: link previews, pinned-message bar, unread mention/reaction jumps,
-  bot inline and reply keyboards, multi-select, silent and scheduled
-  sending, voice message recording (Ogg Opus), emoji/sticker/GIF panel with
-  animated (Lottie) stickers, @mention and /command autocomplete, new
+  bot inline and reply keyboards, embedded bot Web Apps (`WKWebView` with
+  `TelegramWebviewProxy` bridge, theme/viewport sync, MainButton/BackButton,
+  popups and custom requests), full `@bot query` inline bot results for all
+  result types, multi-select, silent and scheduled sending, voice message
+  recording (Ogg Opus), emoji/sticker/GIF panel with animated (Lottie) and
+  video (WebM VP9 + alpha via VideoToolbox) stickers, sticker pack preview and
+  installation, @mention, inline bot and /command autocomplete, Telegram
+  Stories (stories bar, avatar rings, photo & video viewer with reactions and
+  replies), chat themes, presets and cloud/custom wallpapers, new
   groups/channels/secret chats and contacts, group editing and member
-  management, folder editor, forum topics, privacy and two-step
-  verification, proxies, up to three accounts, and Simplified Chinese
+  management, folder editor, forum topics, privacy and two-step verification,
+  proxies, full `t.me`/`tg://` deep link routing (including invite links and
+  message links), up to three accounts with cross-account notifications and
+  Dock badge, and Simplified Chinese (651 strings)
 
 ## Not yet implemented
 
-Voice and video calls (tdesktop uses tgcalls/WebRTC, which has no Swift
-port), video (WebM) sticker playback, stories, inline bot results other
-than GIFs, web app embedding, chat themes and wallpapers, and
-notifications for accounts other than the active one.
+Voice and video calls (tdesktop uses tgcalls/WebRTC, which has no Swift port).
