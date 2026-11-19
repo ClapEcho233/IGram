@@ -57,7 +57,7 @@ private struct SessionRootView: View {
         case .starting:
             StartupView(error: session.startupError)
         case .authorizing:
-            ContentUnavailableView("Sign In", systemImage: "paperplane", description: Text("Signing in is not available yet."))
+            IntroView()
         case .ready:
             ContentUnavailableView("Signed In", systemImage: "checkmark.circle")
         case .closing:
