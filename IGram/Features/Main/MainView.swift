@@ -44,6 +44,23 @@ struct MainView: View {
                 )
             }
         }
+        .overlay(alignment: .top) {
+            if let toast = model.toast {
+                Text(toast.text)
+                    .font(.callout)
+                    .foregroundStyle(.white)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .background(.black.opacity(0.75), in: .rect(cornerRadius: 10))
+                    .padding(.top, 60)
+                    .frame(maxWidth: 420)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+                    .id(toast.id)
+                    .allowsHitTesting(false)
+            }
+        }
+        .animation(.snappy, value: model.toast)
         .environment(model)
         .environment(audioPlayer)
         .focusedSceneValue(\.chatNavigation, navigation)

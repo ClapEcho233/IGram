@@ -25,6 +25,22 @@ final class MainModel {
     var quickLookURL: URL?
     /// Text of the global search field above the chat list.
     var searchText = ""
+    /// A short message shown over the window, like tdesktop's `Ui::Toast`.
+    private(set) var toast: Toast?
+
+    struct Toast: Identifiable, Equatable {
+        let id = UUID()
+        let text: String
+    }
+
+    func showToast(_ text: String) {
+        let toast = Toast(text: text)
+        self.toast = toast
+        Task {
+            try? await Task.sleep(for: .seconds(2.5))
+            if self.toast == toast { self.toast = nil }
+        }
+    }
 
     var chatList: ChatList {
         switch sidebarSelection ?? .allChats {

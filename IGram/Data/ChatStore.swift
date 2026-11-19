@@ -40,6 +40,9 @@ final class ChatItem: Identifiable {
     fileprivate(set) var actionBar: ChatActionBar?
     fileprivate(set) var blockList: BlockList?
     fileprivate(set) var onlineMemberCount = 0
+    /// The message whose reply keyboard is shown under the composer (bots).
+    fileprivate(set) var replyMarkupMessageId: Int64
+    fileprivate(set) var replyMarkupMessage: Message?
     /// Ongoing actions ("typing…", "sending photo…") keyed by sender.
     fileprivate(set) var actions: [MessageSender: ChatAction] = [:]
     let canBeDeletedForAllUsers: Bool
@@ -72,6 +75,7 @@ final class ChatItem: Identifiable {
         pendingJoinRequests = chat.pendingJoinRequests
         actionBar = chat.actionBar
         blockList = chat.blockList
+        replyMarkupMessageId = chat.replyMarkupMessageId
         canBeDeletedForAllUsers = chat.canBeDeletedForAllUsers
         canBeDeletedOnlyForSelf = chat.canBeDeletedOnlyForSelf
     }
@@ -245,6 +249,10 @@ final class ChatStore {
             items[value.chatId]?.actionBar = value.actionBar
         case .updateChatBlockList(let value):
             items[value.chatId]?.blockList = value.blockList
+        case .updateChatReplyMarkup(let value):
+            guard let item = items[value.chatId] else { break }
+            item.replyMarkupMessage = value.replyMarkupMessage
+            item.replyMarkupMessageId = value.replyMarkupMessage?.id ?? 0
         case .updateChatOnlineMemberCount(let value):
             items[value.chatId]?.onlineMemberCount = value.onlineMemberCount
         case .updateChatAction(let value):

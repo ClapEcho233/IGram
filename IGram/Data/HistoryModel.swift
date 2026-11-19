@@ -290,7 +290,7 @@ final class HistoryModel {
             mutate(value.messageId) { $0.apply(content: value.newContent) }
         case .updateMessageEdited(let value):
             properties[value.messageId] = nil
-            mutate(value.messageId) { $0.apply(editDate: value.editDate) }
+            mutate(value.messageId) { $0.apply(editDate: value.editDate, replyMarkup: value.replyMarkup) }
         case .updateMessageInteractionInfo(let value):
             mutate(value.messageId) { $0.apply(interactionInfo: value.interactionInfo) }
         case .updateMessageIsPinned(let value):

@@ -19,6 +19,7 @@ struct ChatMessage: Identifiable, Equatable {
     private(set) var interactionInfo: MessageInteractionInfo?
     private(set) var isPinned: Bool
     private(set) var containsUnreadMention: Bool
+    private(set) var replyMarkup: ReplyMarkup?
 
     init(_ message: Message) {
         self.message = message
@@ -27,6 +28,7 @@ struct ChatMessage: Identifiable, Equatable {
         interactionInfo = message.interactionInfo
         isPinned = message.isPinned
         containsUnreadMention = message.containsUnreadMention
+        replyMarkup = message.replyMarkup
     }
 
     var id: Int64 { message.id }
@@ -62,7 +64,10 @@ struct ChatMessage: Identifiable, Equatable {
     var text: FormattedText? { content.formattedText }
 
     mutating func apply(content: MessageContent) { self.content = content }
-    mutating func apply(editDate: Int) { self.editDate = editDate }
+    mutating func apply(editDate: Int, replyMarkup: ReplyMarkup?) {
+        self.editDate = editDate
+        self.replyMarkup = replyMarkup
+    }
     mutating func apply(interactionInfo: MessageInteractionInfo?) { self.interactionInfo = interactionInfo }
     mutating func apply(isPinned: Bool) { self.isPinned = isPinned }
     mutating func markMentionRead() { containsUnreadMention = false }
