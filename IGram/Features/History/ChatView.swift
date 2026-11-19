@@ -74,6 +74,19 @@ struct ChatView: View {
             ToolbarItem(placement: .navigation) {
                 AvatarView(content: .chat(chat, myUserId: session.myUserId), size: 28)
             }
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    main.isInfoPresented.toggle()
+                } label: {
+                    Label("Info", systemImage: "sidebar.right")
+                }
+                .help("Show chat info")
+                .keyboardShortcut("i", modifiers: [.command])
+            }
+        }
+        .inspector(isPresented: Bindable(main).isInfoPresented) {
+            ChatInfoView(chat: chat)
+                .inspectorColumnWidth(min: 260, ideal: 300, max: 400)
         }
         .task(id: chat.id) {
             if composer == nil { composer = ComposerModel(chat: chat, session: session) }
