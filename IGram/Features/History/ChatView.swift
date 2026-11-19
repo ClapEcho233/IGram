@@ -22,11 +22,14 @@ struct ChatView: View {
     @State private var isDropTargeted = false
     @State private var messageActions = MessageActionsModel()
     @State private var inChatSearch = InChatSearchModel()
+    @State private var pinned: PinnedMessagesModel?
 
     var body: some View {
         VStack(spacing: 0) {
             if inChatSearch.isActive {
                 InChatSearchBar(model: inChatSearch, history: history)
+            } else if let pinned {
+                PinnedMessageBar(model: pinned, history: history)
             }
             HistoryView(chat: chat, history: history, unreadAnchor: unreadAnchor)
             if let composer {
@@ -111,12 +114,18 @@ struct ChatView: View {
             Task { await jumpToPendingMessage() }
         }
         .onDisappear {
+            pinned?.detach()
             history.close()
             if let composer { Task { await composer.saveDraft() } }
         }
         .task(id: chat.id) {
             // Load the profile used by the header subtitle and the info panel.
             await session.loadFullInfo(for: chat)
+        }
+        .task(id: chat.id) {
+            let model = pinned ?? PinnedMessagesModel(chatId: chat.id)
+            pinned = model
+            await model.attach(to: session)
         }
     }
 
