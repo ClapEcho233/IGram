@@ -7,7 +7,8 @@ import AppKit
 import SwiftUI
 
 /// The message input field, backed by `NSTextView` for tdesktop's keyboard
-/// behavior: Enter sends, Shift/Option+Enter inserts a line break, ↑ in an
+/// behavior: Enter sends (or ⌘Enter, per Settings), Shift/Option+Enter inserts
+/// a line break, ↑ in an
 /// empty field edits the last message, Esc cancels a reply or edit, and pasted
 /// images or files become attachments.
 struct ComposerTextView: NSViewRepresentable {
@@ -96,10 +97,13 @@ struct ComposerTextView: NSViewRepresentable {
             switch selector {
             case #selector(NSResponder.insertNewline(_:)):
                 let flags = NSApp.currentEvent?.modifierFlags ?? []
-                if flags.contains(.shift) || flags.contains(.option) {
-                    textView.insertNewlineIgnoringFieldEditor(nil)
-                } else {
+                let sends = UserDefaults.standard.bool(forKey: AppPreferences.sendWithCommandReturn)
+                    ? flags.contains(.command)
+                    : !(flags.contains(.shift) || flags.contains(.option))
+                if sends {
                     parent.onSubmit()
+                } else {
+                    textView.insertNewlineIgnoringFieldEditor(nil)
                 }
                 return true
             case #selector(NSResponder.moveUp(_:)):
@@ -122,6 +126,7 @@ struct ComposerTextView: NSViewRepresentable {
         }
 
         func pasteFiles(_ urls: [URL]) -> Bool { parent.onPasteFiles(urls) }
+        func submit() { parent.onSubmit() }
     }
 
     final class InputTextView: NSTextView {
@@ -137,6 +142,16 @@ struct ComposerTextView: NSViewRepresentable {
             ]
             let origin = NSPoint(x: textContainerInset.width + (textContainer?.lineFragmentPadding ?? 0), y: textContainerInset.height)
             (placeholder as NSString).draw(at: origin, withAttributes: attributes)
+        }
+
+        /// ⌘Return always sends; it arrives as a key equivalent, not a text command.
+        override func performKeyEquivalent(with event: NSEvent) -> Bool {
+            let isReturn = event.keyCode == 36 || event.keyCode == 76
+            if isReturn, event.modifierFlags.contains(.command), window?.firstResponder === self {
+                coordinator?.submit()
+                return true
+            }
+            return super.performKeyEquivalent(with: event)
         }
 
         override func paste(_ sender: Any?) {
