@@ -73,9 +73,36 @@ struct MessageBubble: View {
         switch message.content {
         case .messageText(let value):
             textBlock(value.text)
+        case .messagePhoto, .messageVideo, .messageAnimation:
+            mediaBlock
         default:
             fallbackBlock
         }
+    }
+
+    /// Photos, videos and GIFs fill the bubble; the caption sits below.
+    @ViewBuilder
+    private var mediaBlock: some View {
+        let caption = entry.captionMessage.text ?? FormattedText(entities: [], text: "")
+        VStack(alignment: .leading, spacing: 5) {
+            Group {
+                if entry.isAlbum {
+                    AlbumView(messages: entry.messages)
+                } else {
+                    VisualMediaView(content: message.content)
+                }
+            }
+            .overlay(alignment: .bottomTrailing) {
+                if caption.text.isEmpty {
+                    MessageFooter(message: entry.captionMessage, chat: chat, isOutgoingStyle: isOutgoingStyle, overMedia: true)
+                        .padding(6)
+                }
+            }
+            if !caption.text.isEmpty {
+                textBlock(caption)
+            }
+        }
+        .fixedSize(horizontal: true, vertical: false)
     }
 
     /// Text with the footer tucked into the end of the last line.

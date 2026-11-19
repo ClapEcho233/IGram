@@ -3,6 +3,7 @@
 //  IGram
 //
 
+import QuickLook
 import SwiftUI
 @preconcurrency import TDLibKit
 
@@ -31,6 +32,7 @@ struct MainView: View {
             }
         }
         .environment(model)
+        .quickLookPreview($model.quickLookURL)
         .environment(\.openURL, OpenURLAction { url in
             LinkRouter(session: session, main: model).handle(url)
         })

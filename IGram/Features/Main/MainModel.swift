@@ -21,6 +21,8 @@ final class MainModel {
     var isInfoPresented = false
     /// A message to scroll to once its chat is open, e.g. from search results.
     var pendingMessageId: Int64?
+    /// A downloaded file shown in Quick Look (photos, videos, documents).
+    var quickLookURL: URL?
 
     var chatList: ChatList {
         switch sidebarSelection ?? .allChats {
