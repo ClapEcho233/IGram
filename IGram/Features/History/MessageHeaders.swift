@@ -12,15 +12,16 @@ struct ForwardHeader: View {
     let isOutgoingStyle: Bool
 
     @Environment(TelegramSession.self) private var session
+    @Environment(\.chatThemeStyle) private var theme
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("Forwarded from")
                 .font(.caption)
-                .foregroundStyle(ChatTheme.secondary(outgoing: isOutgoingStyle))
+                .foregroundStyle(theme.secondary(outgoing: isOutgoingStyle))
             Text(originName)
                 .font(.callout.weight(.semibold))
-                .foregroundStyle(ChatTheme.accent(outgoing: isOutgoingStyle))
+                .foregroundStyle(theme.accent(outgoing: isOutgoingStyle))
                 .lineLimit(1)
         }
     }
@@ -45,6 +46,7 @@ struct ReplyHeader: View {
     let isOutgoingStyle: Bool
 
     @Environment(TelegramSession.self) private var session
+    @Environment(\.chatThemeStyle) private var theme
 
     var body: some View {
         if case .messageReplyToMessage(let reply) = message.replyTo {
@@ -64,7 +66,7 @@ struct ReplyHeader: View {
                             .lineLimit(1)
                         Text(previewText(reply: reply, replied: replied))
                             .font(.callout)
-                            .foregroundStyle(.primary.opacity(0.8))
+                            .foregroundStyle(theme.primaryText(outgoing: isOutgoingStyle).opacity(0.82))
                             .lineLimit(1)
                     }
                 }
@@ -79,7 +81,7 @@ struct ReplyHeader: View {
     }
 
     private func accent(for replied: ChatMessage?) -> Color {
-        guard !isOutgoingStyle, let replied else { return ChatTheme.accent(outgoing: isOutgoingStyle) }
+        guard !isOutgoingStyle, let replied else { return theme.accent(outgoing: isOutgoingStyle) }
         return PeerColor.name(session.accentColorId(of: replied.senderId))
     }
 

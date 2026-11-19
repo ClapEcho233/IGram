@@ -18,6 +18,7 @@ struct ChatInfoView: View {
     @State private var pendingRemoval: ChatRemoval?
     @State private var isEditing = false
     @State private var isAddingMembers = false
+    @State private var isPickingTheme = false
 
     var body: some View {
         ScrollView {
@@ -25,6 +26,9 @@ struct ChatInfoView: View {
                 header
                 details
                 notificationToggle
+                if !chat.isSecret, !session.themes.emojiThemes.isEmpty || chat.theme != nil || chat.background != nil {
+                    themeRow
+                }
                 if !members.isEmpty { membersSection }
                 SharedMediaSection(chat: chat, kind: $mediaKind)
                 actions
@@ -53,6 +57,9 @@ struct ChatInfoView: View {
                     members = await session.members(of: chat)
                 }
             }
+        }
+        .sheet(isPresented: $isPickingTheme) {
+            ChatThemePickerSheet(chat: chat)
         }
     }
 
@@ -245,6 +252,34 @@ struct ChatInfoView: View {
             }
             await session.loadFullInfo(for: chat)
             members = await session.members(of: chat)
+        }
+    }
+
+    private var themeRow: some View {
+        Button {
+            isPickingTheme = true
+        } label: {
+            HStack {
+                Label("Chat Theme", systemImage: "paintbrush")
+                Spacer()
+                Text(themeLabel)
+                    .foregroundStyle(.secondary)
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(12)
+            .background(.quaternary.opacity(0.5), in: .rect(cornerRadius: 10))
+            .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var themeLabel: String {
+        switch chat.theme {
+        case .chatThemeEmoji(let value): value.name
+        case .chatThemeGift(let value): value.giftTheme.gift.name
+        case nil: String(localized: "Default")
         }
     }
 

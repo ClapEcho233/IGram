@@ -15,6 +15,7 @@ struct MessageFooter: View {
     var overMedia = false
 
     @Environment(TelegramSession.self) private var session
+    @Environment(\.chatThemeStyle) private var theme
 
     var body: some View {
         HStack(spacing: 3) {
@@ -35,7 +36,7 @@ struct MessageFooter: View {
         }
         .font(.caption2)
         .monospacedDigit()
-        .foregroundStyle(overMedia ? AnyShapeStyle(.white) : AnyShapeStyle(ChatTheme.secondary(outgoing: isOutgoingStyle)))
+        .foregroundStyle(overMedia ? AnyShapeStyle(.white) : AnyShapeStyle(theme.secondary(outgoing: isOutgoingStyle)))
         .padding(.horizontal, overMedia ? 6 : 0)
         .padding(.vertical, overMedia ? 2 : 0)
         .background {

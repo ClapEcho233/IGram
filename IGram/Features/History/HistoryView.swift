@@ -18,6 +18,8 @@ struct HistoryView: View {
     let unreadAnchor: Int64?
 
     @Environment(TelegramSession.self) private var session: TelegramSession?
+    @Environment(\.colorScheme) private var colorScheme
+    @AppStorage(AppPreferences.chatPreset) private var presetValue = ChatThemePreset.classic.rawValue
     @State private var position = ScrollPosition(idType: String.self)
     @State private var isNearBottom = true
     @State private var highlightedMessageId: Int64?
@@ -86,7 +88,16 @@ struct HistoryView: View {
             .padding(16)
         }
         .animation(.snappy, value: isNearBottom)
-        .background(ChatTheme.background)
+        .environment(\.chatThemeStyle, resolvedThemeStyle)
+        .background { ChatBackgroundView(chat: chat) }
+    }
+
+    private var resolvedThemeStyle: ChatThemeStyle {
+        let isDark = colorScheme == .dark
+        let preset = ChatThemePreset(rawValue: presetValue) ?? .classic
+        let settings = session?.themes.themeSettings(for: chat, isDark: isDark)
+        let palette = ChatThemePalette.resolved(preset: preset, settings: settings, isDark: isDark)
+        return ChatThemeStyle(palette: palette, isDark: isDark)
     }
 
     private var pagingIndicator: some View {

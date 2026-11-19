@@ -14,6 +14,7 @@ struct DocumentView: View {
     let isOutgoingStyle: Bool
 
     @Environment(TelegramSession.self) private var session
+    @Environment(\.chatThemeStyle) private var theme
 
     var body: some View {
         let item = session.files.item(for: document.document)
@@ -38,7 +39,7 @@ struct DocumentView: View {
                     .truncationMode(.middle)
                 Text(sizeText(item))
                     .font(.caption.monospacedDigit())
-                    .foregroundStyle(ChatTheme.secondary(outgoing: isOutgoingStyle))
+                    .foregroundStyle(theme.secondary(outgoing: isOutgoingStyle))
             }
             .frame(minWidth: 140, alignment: .leading)
         }
@@ -131,6 +132,7 @@ struct AudioView: View {
 
     @Environment(TelegramSession.self) private var session
     @Environment(AudioPlayer.self) private var player
+    @Environment(\.chatThemeStyle) private var theme
 
     var body: some View {
         let isCurrent = player.isCurrent(audio.audio)
@@ -145,11 +147,11 @@ struct AudioView: View {
                 if isCurrent, player.duration > 0 {
                     ProgressView(value: player.progress)
                         .progressViewStyle(.linear)
-                        .tint(ChatTheme.accent(outgoing: isOutgoingStyle))
+                        .tint(theme.accent(outgoing: isOutgoingStyle))
                 } else {
                     Text(audio.performer.isEmpty ? DurationFormatting.short(audio.duration) : "\(audio.performer) · \(DurationFormatting.short(audio.duration))")
                         .font(.caption)
-                        .foregroundStyle(ChatTheme.secondary(outgoing: isOutgoingStyle))
+                        .foregroundStyle(theme.secondary(outgoing: isOutgoingStyle))
                         .lineLimit(1)
                 }
             }
@@ -167,6 +169,7 @@ struct VoiceNoteView: View {
 
     @Environment(TelegramSession.self) private var session
     @Environment(AudioPlayer.self) private var player
+    @Environment(\.chatThemeStyle) private var theme
 
     private static let barCount = 48
 
@@ -188,11 +191,11 @@ struct VoiceNoteView: View {
                 HStack(spacing: 4) {
                     Text(isCurrent && player.currentTime > 0 ? DurationFormatting.short(Int(player.currentTime)) : DurationFormatting.short(voiceNote.duration))
                     if !isListened, !message.isOutgoing {
-                        Circle().fill(ChatTheme.accent(outgoing: isOutgoingStyle)).frame(width: 5, height: 5)
+                        Circle().fill(theme.accent(outgoing: isOutgoingStyle)).frame(width: 5, height: 5)
                     }
                 }
                 .font(.caption.monospacedDigit())
-                .foregroundStyle(ChatTheme.secondary(outgoing: isOutgoingStyle))
+                .foregroundStyle(theme.secondary(outgoing: isOutgoingStyle))
             }
         }
         .accessibilityLabel(Text("Voice message, \(DurationFormatting.short(voiceNote.duration))"))
@@ -204,6 +207,8 @@ struct WaveformView: View {
     let progress: Double
     let isOutgoingStyle: Bool
 
+    @Environment(\.chatThemeStyle) private var theme
+
     var body: some View {
         Canvas { context, size in
             guard !bars.isEmpty else { return }
@@ -213,7 +218,7 @@ struct WaveformView: View {
                 let height = max(CGFloat(value) / 31 * size.height, 2)
                 let rect = CGRect(x: CGFloat(index) * step, y: size.height - height, width: barWidth, height: height)
                 let played = Double(index) / Double(bars.count) < progress
-                let color = played ? ChatTheme.accent(outgoing: isOutgoingStyle) : ChatTheme.secondary(outgoing: isOutgoingStyle).opacity(0.6)
+                let color = played ? theme.accent(outgoing: isOutgoingStyle) : theme.secondary(outgoing: isOutgoingStyle).opacity(0.6)
                 context.fill(Path(roundedRect: rect, cornerRadius: barWidth / 2), with: .color(color))
             }
         }
@@ -226,16 +231,25 @@ struct PlayButton: View {
     let isOutgoingStyle: Bool
     let action: () -> Void
 
+    @Environment(\.chatThemeStyle) private var theme
+
+    private var iconColor: Color {
+        let accentRGB = isOutgoingStyle ? theme.palette.outgoingAccent : theme.palette.incomingAccent
+        return ChatThemePalette.isDarkColor(accentRGB)
+            ? .white
+            : Color(rgb: theme.palette.outgoingBubble.representativeRGB)
+    }
+
     var body: some View {
         Button(action: action) {
             ZStack {
-                Circle().fill(ChatTheme.accent(outgoing: isOutgoingStyle))
+                Circle().fill(theme.accent(outgoing: isOutgoingStyle))
                 if isLoading {
-                    ProgressView().controlSize(.small).tint(.white)
+                    ProgressView().controlSize(.small).tint(iconColor)
                 } else {
                     Image(systemName: isPlaying ? "pause.fill" : "play.fill")
                         .font(.title3)
-                        .foregroundStyle(.white)
+                        .foregroundStyle(iconColor)
                         .offset(x: isPlaying ? 0 : 1.5)
                 }
             }

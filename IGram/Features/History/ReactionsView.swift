@@ -14,8 +14,10 @@ struct ReactionsView: View {
     let isOutgoingStyle: Bool
 
     @Environment(TelegramSession.self) private var session
+    @Environment(\.chatThemeStyle) private var theme
 
     var body: some View {
+        let accent = theme.accent(outgoing: isOutgoingStyle)
         FlowLayout(spacing: 4) {
             ForEach(reactions, id: \.type) { reaction in
                 Button {
@@ -28,11 +30,11 @@ struct ReactionsView: View {
                     }
                     .padding(.horizontal, 7)
                     .padding(.vertical, 3)
-                    .foregroundStyle(reaction.isChosen ? AnyShapeStyle(.white) : AnyShapeStyle(ChatTheme.accent(outgoing: isOutgoingStyle)))
+                    .foregroundStyle(reaction.isChosen ? AnyShapeStyle(.white) : AnyShapeStyle(accent))
                     .background(
                         reaction.isChosen
-                            ? AnyShapeStyle(ChatTheme.accent(outgoing: isOutgoingStyle))
-                            : AnyShapeStyle(ChatTheme.accent(outgoing: isOutgoingStyle).opacity(0.14)),
+                            ? AnyShapeStyle(accent)
+                            : AnyShapeStyle(accent.opacity(0.14)),
                         in: .capsule
                     )
                 }

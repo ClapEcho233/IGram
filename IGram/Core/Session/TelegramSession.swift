@@ -33,6 +33,7 @@ final class TelegramSession {
     @ObservationIgnored let files: FileStore
     @ObservationIgnored let chats: ChatStore
     let folders = ChatFolderStore()
+    let themes = ThemeStore()
 
     /// Invoked once after TDLib reports `authorizationStateClosed`.
     @ObservationIgnored var onClosed: (() -> Void)?
@@ -136,7 +137,7 @@ final class TelegramSession {
         case .updateOption(let value):
             handleOption(name: value.name, value: value.value)
         default:
-            _ = chats.handle(update) || peers.handle(update) || files.handle(update) || folders.handle(update)
+            _ = chats.handle(update) || peers.handle(update) || files.handle(update) || folders.handle(update) || themes.handle(update)
         }
         for observer in updateObservers.values {
             observer(update)

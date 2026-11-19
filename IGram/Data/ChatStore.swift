@@ -39,6 +39,8 @@ final class ChatItem: Identifiable {
     fileprivate(set) var pendingJoinRequests: ChatJoinRequestsInfo?
     fileprivate(set) var actionBar: ChatActionBar?
     fileprivate(set) var blockList: BlockList?
+    fileprivate(set) var theme: TDLibKit.ChatTheme?
+    fileprivate(set) var background: ChatBackground?
     fileprivate(set) var onlineMemberCount = 0
     fileprivate(set) var hasScheduledMessages: Bool
     /// Forums shown as a list of topics rather than one message stream.
@@ -78,6 +80,8 @@ final class ChatItem: Identifiable {
         pendingJoinRequests = chat.pendingJoinRequests
         actionBar = chat.actionBar
         blockList = chat.blockList
+        theme = chat.theme
+        background = chat.background
         replyMarkupMessageId = chat.replyMarkupMessageId
         hasScheduledMessages = chat.hasScheduledMessages
         viewAsTopics = chat.viewAsTopics
@@ -254,6 +258,10 @@ final class ChatStore {
             items[value.chatId]?.actionBar = value.actionBar
         case .updateChatBlockList(let value):
             items[value.chatId]?.blockList = value.blockList
+        case .updateChatTheme(let value):
+            items[value.chatId]?.theme = value.theme
+        case .updateChatBackground(let value):
+            items[value.chatId]?.background = value.background
         case .updateChatViewAsTopics(let value):
             items[value.chatId]?.viewAsTopics = value.viewAsTopics
         case .updateChatHasScheduledMessages(let value):

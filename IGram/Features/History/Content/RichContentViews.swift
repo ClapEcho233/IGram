@@ -55,6 +55,7 @@ struct ContactView: View {
 
     @Environment(TelegramSession.self) private var session
     @Environment(MainModel.self) private var main
+    @Environment(\.chatThemeStyle) private var theme
 
     var body: some View {
         let name = [contact.firstName, contact.lastName].filter { !$0.isEmpty }.joined(separator: " ")
@@ -71,7 +72,7 @@ struct ContactView: View {
                         .font(.callout.weight(.semibold))
                     Text(contact.phoneNumber.hasPrefix("+") ? contact.phoneNumber : "+\(contact.phoneNumber)")
                         .font(.caption)
-                        .foregroundStyle(ChatTheme.secondary(outgoing: isOutgoingStyle))
+                        .foregroundStyle(theme.secondary(outgoing: isOutgoingStyle))
                         .textSelection(.enabled)
                 }
             }
@@ -98,6 +99,7 @@ struct PollView: View {
     let isOutgoingStyle: Bool
 
     @Environment(TelegramSession.self) private var session
+    @Environment(\.chatThemeStyle) private var theme
     @State private var selection: Set<Int> = []
 
     private var hasVoted: Bool { poll.options.contains { $0.isChosen } }
@@ -114,7 +116,7 @@ struct PollView: View {
                 .fixedSize(horizontal: false, vertical: true)
             Text(kindText)
                 .font(.caption)
-                .foregroundStyle(ChatTheme.secondary(outgoing: isOutgoingStyle))
+                .foregroundStyle(theme.secondary(outgoing: isOutgoingStyle))
 
             ForEach(Array(poll.options.enumerated()), id: \.offset) { index, option in
                 if showsResults {
@@ -127,7 +129,7 @@ struct PollView: View {
             HStack {
                 Text(poll.totalVoterCount == 0 ? String(localized: "No votes yet") : String(localized: "\(poll.totalVoterCount) votes"))
                     .font(.caption)
-                    .foregroundStyle(ChatTheme.secondary(outgoing: isOutgoingStyle))
+                    .foregroundStyle(theme.secondary(outgoing: isOutgoingStyle))
                 Spacer()
                 if poll.allowsMultipleAnswers, !showsResults {
                     Button("Vote") { vote(Array(selection).sorted()) }
@@ -159,7 +161,7 @@ struct PollView: View {
         } label: {
             HStack(spacing: 8) {
                 Image(systemName: selection.contains(index) ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(ChatTheme.accent(outgoing: isOutgoingStyle))
+                    .foregroundStyle(theme.accent(outgoing: isOutgoingStyle))
                 Text(option.text.attributedString())
                     .font(.callout)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -180,13 +182,13 @@ struct PollView: View {
                     .font(.callout)
                 if option.isChosen {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(ChatTheme.accent(outgoing: isOutgoingStyle))
+                        .foregroundStyle(theme.accent(outgoing: isOutgoingStyle))
                         .font(.caption)
                 }
             }
             GeometryReader { proxy in
                 Capsule()
-                    .fill(ChatTheme.accent(outgoing: isOutgoingStyle))
+                    .fill(theme.accent(outgoing: isOutgoingStyle))
                     .frame(width: max(proxy.size.width * CGFloat(option.votePercentage) / 100, 4))
             }
             .frame(height: 4)
@@ -216,6 +218,7 @@ struct CallView: View {
     let isOutgoingStyle: Bool
 
     @Environment(TelegramSession.self) private var session
+    @Environment(\.chatThemeStyle) private var theme
 
     private var isMissed: Bool {
         switch call.discardReason {
@@ -228,7 +231,7 @@ struct CallView: View {
         HStack(spacing: 10) {
             Image(systemName: call.isVideo ? "video.fill" : "phone.fill")
                 .font(.title3)
-                .foregroundStyle(ChatTheme.accent(outgoing: isOutgoingStyle))
+                .foregroundStyle(theme.accent(outgoing: isOutgoingStyle))
                 .frame(width: 32)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(.callout.weight(.semibold))
@@ -240,7 +243,7 @@ struct CallView: View {
                     }
                 }
                 .font(.caption)
-                .foregroundStyle(ChatTheme.secondary(outgoing: isOutgoingStyle))
+                .foregroundStyle(theme.secondary(outgoing: isOutgoingStyle))
             }
         }
         .frame(minWidth: 160, alignment: .leading)

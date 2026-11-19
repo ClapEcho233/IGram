@@ -12,9 +12,10 @@ struct LinkPreviewView: View {
     let isOutgoingStyle: Bool
 
     @Environment(\.openURL) private var openURL
+    @Environment(\.chatThemeStyle) private var theme
 
     var body: some View {
-        let accent = ChatTheme.accent(outgoing: isOutgoingStyle)
+        let accent = theme.accent(outgoing: isOutgoingStyle)
         let media = LinkPreviewMedia(type: preview.type)
         let largeMedia = preview.showLargeMedia && media.isLarge
         HStack(alignment: .top, spacing: 0) {

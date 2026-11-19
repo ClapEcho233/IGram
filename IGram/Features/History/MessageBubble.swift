@@ -15,6 +15,7 @@ struct MessageBubble: View {
     let history: HistoryModel
 
     @Environment(TelegramSession.self) private var session
+    @Environment(\.chatThemeStyle) private var theme
 
     private var message: ChatMessage { entry.primary }
     private var isOutgoingStyle: Bool { message.isOutgoing && !chat.isChannel }
@@ -41,7 +42,8 @@ struct MessageBubble: View {
                     .padding(.bottom, 7)
             }
         }
-        .background(ChatTheme.bubble(outgoing: isOutgoingStyle), in: shape)
+        .foregroundStyle(theme.primaryText(outgoing: isOutgoingStyle))
+        .background(theme.bubbleStyle(outgoing: isOutgoingStyle), in: shape)
         .clipShape(shape)
         .frame(maxWidth: 520, alignment: isOutgoingStyle ? .trailing : .leading)
     }
@@ -62,7 +64,8 @@ struct MessageBubble: View {
                 VStack(alignment: .leading, spacing: 4) { headers }
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
-                    .background(ChatTheme.bubble(outgoing: isOutgoingStyle), in: .rect(cornerRadius: 10))
+                    .foregroundStyle(theme.primaryText(outgoing: isOutgoingStyle))
+                    .background(theme.bubbleStyle(outgoing: isOutgoingStyle), in: .rect(cornerRadius: 10))
                     .frame(maxWidth: 300, alignment: .leading)
             }
             standaloneContent
@@ -243,7 +246,7 @@ struct MessageBubble: View {
                     .padding(.top, hasHeader ? 0 : 8)
             }
             if !text.text.isEmpty {
-                Text(text.attributedString(linkColor: ChatTheme.accent(outgoing: isOutgoingStyle)))
+                Text(text.attributedString(linkColor: theme.accent(outgoing: isOutgoingStyle)))
                     .textSelection(.enabled)
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.horizontal, 10)
@@ -267,7 +270,7 @@ struct MessageBubble: View {
         let placeholder = Text(MessageFooter.placeholder(for: entry.captionMessage, chat: chat))
             .font(.caption2)
             .foregroundStyle(.clear)
-        return Text("\(Text(text.attributedString(linkColor: ChatTheme.accent(outgoing: isOutgoingStyle))))\(placeholder)")
+        return Text("\(Text(text.attributedString(linkColor: theme.accent(outgoing: isOutgoingStyle))))\(placeholder)")
             .textSelection(.enabled)
             .fixedSize(horizontal: false, vertical: true)
             .frame(minWidth: 40, alignment: .leading)
