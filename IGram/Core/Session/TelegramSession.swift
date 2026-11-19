@@ -27,6 +27,7 @@ final class TelegramSession {
 
     @ObservationIgnored let peers = PeerStore()
     @ObservationIgnored let files: FileStore
+    @ObservationIgnored let chats: ChatStore
 
     /// Invoked once after TDLib reports `authorizationStateClosed`.
     @ObservationIgnored var onClosed: (() -> Void)?
@@ -44,6 +45,7 @@ final class TelegramSession {
         self.credentials = credentials
         self.client = client
         files = FileStore(client: client)
+        chats = ChatStore(client: client)
     }
 
     /// Starts consuming TDLib updates. TDLib begins by asking for parameters.
@@ -88,7 +90,7 @@ final class TelegramSession {
         case .updateOption(let value):
             handleOption(name: value.name, value: value.value)
         default:
-            _ = peers.handle(update) || files.handle(update)
+            _ = chats.handle(update) || peers.handle(update) || files.handle(update)
         }
     }
 
