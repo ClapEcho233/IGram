@@ -59,7 +59,7 @@ private struct SessionRootView: View {
         case .authorizing:
             IntroView()
         case .ready:
-            ContentUnavailableView("Signed In", systemImage: "checkmark.circle")
+            MainView()
         case .closing:
             ProgressView("Logging out…")
                 .controlSize(.large)
