@@ -65,6 +65,8 @@ struct IntroView: View {
                 EmailAddressStepView(model: model)
             case .authorizationStateWaitEmailCode(let value):
                 EmailCodeStepView(model: model, state: value)
+            case .authorizationStateWaitOtherDeviceConfirmation(let value):
+                QRCodeStepView(model: model, link: value.link)
             default:
                 ContentUnavailableView(
                     "Unsupported Step",
