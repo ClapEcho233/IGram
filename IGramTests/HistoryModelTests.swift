@@ -133,4 +133,24 @@ struct HistoryModelTests {
         #expect(MessageContent.messageChatChangeTitle(MessageChatChangeTitle(title: "New")).isService)
         #expect(MessageContent.messagePinMessage(MessagePinMessage(messageId: 1)).isService)
     }
+
+    @Test func ignoresScheduledMessages() {
+        let model = makeModel([10])
+        let base = Fixtures.message(id: 11)
+        let scheduled = Message(
+            authorSignature: "", autoDeleteIn: 0, canBeSaved: true, chatId: 1, chatInstance: 0,
+            containsUnreadMention: false, containsUnreadPollVotes: false, content: base.content, date: base.date,
+            editDate: 0, effectId: 0, ephemeralContent: nil, ephemeralMessageId: 0, factCheck: nil,
+            forwardInfo: nil, guestBotCallerId: nil, hasTimestampedMedia: false, id: 11, importInfo: nil,
+            interactionInfo: nil, isChannelPost: false, isFromOffline: false, isOutgoing: true,
+            isPaidGramSuggestedPost: false, isPaidStarSuggestedPost: false, isPinned: false, mediaAlbumId: 0,
+            paidMessageStarCount: 0, receiverId: nil, replyMarkup: nil, replyTo: nil, restrictionInfo: nil,
+            schedulingState: .messageSchedulingStateSendWhenOnline, selfDestructIn: 0, selfDestructType: nil,
+            senderBoostCount: 0, senderBusinessBotUserId: 0, senderId: base.senderId, senderTag: "",
+            sendingState: nil, suggestedPostInfo: nil, summaryLanguageCode: "", topicId: nil,
+            unreadReactions: [], viaBotUserId: 0
+        )
+        model.handle(.updateNewMessage(UpdateNewMessage(message: scheduled)))
+        #expect(model.messages.map(\.id) == [10])
+    }
 }

@@ -311,7 +311,8 @@ final class HistoryModel {
     private func insertLive(_ message: Message) {
         // While the slice has a gap to the newest messages, new ones would be
         // disconnected from what is loaded; the view offers a jump instead.
-        guard didLoadInitial, !hasMoreNewer, index(of: message.id) == nil else { return }
+        // Scheduled messages live in their own list, not in the history.
+        guard didLoadInitial, !hasMoreNewer, message.schedulingState == nil, index(of: message.id) == nil else { return }
         messages = Self.merge(messages, [message])
         if message.isOutgoing {
             focusRequest = FocusRequest(messageId: message.id, highlight: false)
@@ -320,7 +321,7 @@ final class HistoryModel {
 
     private func replace(_ oldId: Int64, with message: Message) {
         properties[oldId] = nil
-        guard let index = index(of: oldId) else { return }
+        guard message.schedulingState == nil, let index = index(of: oldId) else { return }
         messages.remove(at: index)
         messages = Self.merge(messages, [message])
     }
