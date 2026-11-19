@@ -113,6 +113,10 @@ struct MainView: View {
             WebAppSheet(request: request)
                 .environment(model)
         }
+        .sheet(item: $model.storyViewer) { request in
+            StoryViewerSheet(request: request)
+                .environment(model)
+        }
         .environment(\.openURL, OpenURLAction { url in
             LinkRouter(session: session, main: model).handle(url)
         })

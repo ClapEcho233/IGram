@@ -18,32 +18,45 @@ struct ChatListView: View {
     var body: some View {
         let list = session.chats.list(chatList)
         let chats = list.chatIds.compactMap(session.chats.chat)
-        List(selection: $selection) {
-            ForEach(chats) { chat in
-                ChatRow(chat: chat, chatList: chatList)
-                    .tag(chat.id)
-                    .contextMenu {
-                        ChatContextMenu(chat: chat, chatList: chatList) { pendingRemoval = $0 }
-                    }
+        VStack(spacing: 0) {
+            if let storyList {
+                StoriesBar(storyList: storyList)
             }
-            if !list.isComplete {
-                ProgressView()
-                    .controlSize(.small)
-                    .frame(maxWidth: .infinity)
-                    .listRowSeparator(.hidden)
-                    // Re-runs whenever a page arrives while the spinner is still visible.
-                    .task(id: list.chatIds.count) {
-                        await session.chats.loadMore(chatList)
-                    }
+            List(selection: $selection) {
+                ForEach(chats) { chat in
+                    ChatRow(chat: chat, chatList: chatList)
+                        .tag(chat.id)
+                        .contextMenu {
+                            ChatContextMenu(chat: chat, chatList: chatList) { pendingRemoval = $0 }
+                        }
+                }
+                if !list.isComplete {
+                    ProgressView()
+                        .controlSize(.small)
+                        .frame(maxWidth: .infinity)
+                        .listRowSeparator(.hidden)
+                        // Re-runs whenever a page arrives while the spinner is still visible.
+                        .task(id: list.chatIds.count) {
+                            await session.chats.loadMore(chatList)
+                        }
+                }
             }
-        }
-        .listStyle(.inset)
-        .overlay {
-            if list.isComplete, chats.isEmpty {
-                ContentUnavailableView(emptyTitle, systemImage: "bubble.left.and.bubble.right")
+            .listStyle(.inset)
+            .overlay {
+                if list.isComplete, chats.isEmpty {
+                    ContentUnavailableView(emptyTitle, systemImage: "bubble.left.and.bubble.right")
+                }
             }
         }
         .chatRemovalConfirmation($pendingRemoval, session: session)
+    }
+
+    private var storyList: StoryList? {
+        switch chatList {
+        case .chatListMain: .storyListMain
+        case .chatListArchive: .storyListArchive
+        case .chatListFolder: nil
+        }
     }
 
     private var emptyTitle: String {

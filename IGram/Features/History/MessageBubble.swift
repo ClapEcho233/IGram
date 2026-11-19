@@ -15,6 +15,7 @@ struct MessageBubble: View {
     let history: HistoryModel
 
     @Environment(TelegramSession.self) private var session
+    @Environment(MainModel.self) private var main
     @Environment(\.chatThemeStyle) private var theme
 
     private var message: ChatMessage { entry.primary }
@@ -184,6 +185,28 @@ struct MessageBubble: View {
             paddedBlock { PollView(message: message, poll: value.poll, isOutgoingStyle: isOutgoingStyle) }
         case .messageCall(let value):
             paddedBlock { CallView(call: value, isOutgoing: message.isOutgoing, isOutgoingStyle: isOutgoingStyle) }
+        case .messageStory(let value):
+            paddedBlock {
+                Button {
+                    main.openStory(posterChatId: value.storyPosterChatId, storyId: value.storyId)
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "play.circle.fill")
+                            .font(.title2)
+                            .foregroundStyle(theme.accent(outgoing: isOutgoingStyle))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(value.viaMention ? String(localized: "Mentioned you in a story") : String(localized: "Story"))
+                                .font(.callout.weight(.semibold))
+                            Text(session.chats.chat(value.storyPosterChatId).map { session.title(of: $0) } ?? String(localized: "Tap to view"))
+                                .font(.caption)
+                                .foregroundStyle(theme.secondary(outgoing: isOutgoingStyle))
+                        }
+                    }
+                    .frame(minWidth: 160, alignment: .leading)
+                    .contentShape(.rect)
+                }
+                .buttonStyle(.plain)
+            }
         default:
             fallbackBlock
         }

@@ -46,10 +46,12 @@ struct ReplyHeader: View {
     let isOutgoingStyle: Bool
 
     @Environment(TelegramSession.self) private var session
+    @Environment(MainModel.self) private var main
     @Environment(\.chatThemeStyle) private var theme
 
     var body: some View {
-        if case .messageReplyToMessage(let reply) = message.replyTo {
+        switch message.replyTo {
+        case .messageReplyToMessage(let reply):
             let replied = history.repliedMessage(for: message)
             Button {
                 guard reply.chatId == history.chatId else { return }
@@ -77,6 +79,35 @@ struct ReplyHeader: View {
                 .contentShape(.rect)
             }
             .buttonStyle(.plain)
+        case .messageReplyToStory(let reply):
+            let accent = theme.accent(outgoing: isOutgoingStyle)
+            Button {
+                main.openStory(posterChatId: reply.storyPosterChatId, storyId: reply.storyId)
+            } label: {
+                HStack(spacing: 6) {
+                    RoundedRectangle(cornerRadius: 1.5)
+                        .fill(accent)
+                        .frame(width: 3)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(session.chats.chat(reply.storyPosterChatId).map { session.title(of: $0) } ?? String(localized: "Story"))
+                            .font(.callout.weight(.semibold))
+                            .foregroundStyle(accent)
+                            .lineLimit(1)
+                        Text("Story")
+                            .font(.callout)
+                            .foregroundStyle(theme.primaryText(outgoing: isOutgoingStyle).opacity(0.82))
+                            .lineLimit(1)
+                    }
+                }
+                .padding(.vertical, 3)
+                .padding(.trailing, 8)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(accent.opacity(0.12), in: .rect(cornerRadius: 4))
+                .contentShape(.rect)
+            }
+            .buttonStyle(.plain)
+        case nil:
+            EmptyView()
         }
     }
 

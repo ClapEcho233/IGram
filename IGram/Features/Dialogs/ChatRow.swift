@@ -12,14 +12,28 @@ struct ChatRow: View {
     let chatList: ChatList
 
     @Environment(TelegramSession.self) private var session
+    @Environment(MainModel.self) private var main
 
     var body: some View {
+        let ring = session.stories.ringState(for: chat.id)
         HStack(spacing: 10) {
-            AvatarView(
-                content: .chat(chat, myUserId: session.myUserId),
-                size: 48,
-                isOnline: session.isOnline(chat)
-            )
+            ZStack {
+                AvatarView(
+                    content: .chat(chat, myUserId: session.myUserId),
+                    size: ring == .none ? 48 : 42,
+                    isOnline: session.isOnline(chat)
+                )
+                if ring != .none {
+                    StoryRingOverlay(state: ring, lineWidth: 2)
+                        .frame(width: 48, height: 48)
+                }
+            }
+            .frame(width: 48, height: 48)
+            .onTapGesture {
+                if ring != .none {
+                    main.openStories(chatIds: [chat.id], startingAt: chat.id)
+                }
+            }
             VStack(alignment: .leading, spacing: 2) {
                 titleLine
                 previewLine

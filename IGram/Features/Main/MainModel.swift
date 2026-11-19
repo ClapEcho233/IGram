@@ -37,6 +37,8 @@ final class MainModel {
     var proxyToAdd: ProxyDraft?
     /// An embedded Telegram Mini App (Web App) open in a sheet.
     var webApp: WebAppRequest?
+    /// Active Telegram Stories viewer sheet.
+    var storyViewer: StoryViewerRequest?
     /// Text to place into a chat's composer (e.g. from a Mini App inline switch).
     var pendingComposerText: ComposerDraft?
     /// A short message shown over the window, like tdesktop's `Ui::Toast`.
@@ -77,6 +79,15 @@ final class MainModel {
 
     func openWebApp(title: String, launch: WebAppLaunch) {
         webApp = WebAppRequest(title: title.isEmpty ? String(localized: "Web App") : title, launch: launch)
+    }
+
+    func openStories(chatIds: [Int64], startingAt chatId: Int64) {
+        let peers = chatIds.isEmpty ? [chatId] : chatIds
+        storyViewer = StoryViewerRequest(chatIds: peers, initialChatId: chatId, initialStoryId: nil)
+    }
+
+    func openStory(posterChatId: Int64, storyId: Int) {
+        storyViewer = StoryViewerRequest(chatIds: [posterChatId], initialChatId: posterChatId, initialStoryId: storyId)
     }
 }
 
