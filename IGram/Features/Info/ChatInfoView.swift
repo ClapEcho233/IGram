@@ -16,6 +16,8 @@ struct ChatInfoView: View {
     @State private var members: [ChatMember] = []
     @State private var mediaKind: SharedMediaModel.Kind = .media
     @State private var pendingRemoval: ChatRemoval?
+    @State private var isEditing = false
+    @State private var isAddingMembers = false
 
     var body: some View {
         ScrollView {
@@ -34,6 +36,24 @@ struct ChatInfoView: View {
             members = await session.members(of: chat)
         }
         .chatRemovalConfirmation($pendingRemoval, session: session)
+        .toolbar {
+            if session.canEditInfo(chat) {
+                ToolbarItem {
+                    Button("Edit") { isEditing = true }
+                }
+            }
+        }
+        .sheet(isPresented: $isEditing) {
+            EditChatSheet(chat: chat)
+        }
+        .sheet(isPresented: $isAddingMembers) {
+            AddMembersSheet(chat: chat) {
+                Task {
+                    await session.loadFullInfo(for: chat)
+                    members = await session.members(of: chat)
+                }
+            }
+        }
     }
 
     // MARK: - Header
@@ -147,8 +167,15 @@ struct ChatInfoView: View {
 
     private var membersSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Members")
-                .font(.headline)
+            HStack {
+                Text("Members")
+                    .font(.headline)
+                Spacer()
+                if session.canInviteMembers(chat) {
+                    Button("Add", systemImage: "person.badge.plus") { isAddingMembers = true }
+                        .buttonStyle(.borderless)
+                }
+            }
             ForEach(members, id: \.memberId) { member in
                 Button {
                     if let userId = member.memberId.userId, userId != session.myUserId {
@@ -162,9 +189,50 @@ struct ChatInfoView: View {
                     MemberRow(member: member)
                 }
                 .buttonStyle(.plain)
+                .contextMenu { memberMenu(member) }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private func memberMenu(_ member: ChatMember) -> some View {
+        if member.memberId.userId != session.myUserId {
+            switch member.status {
+            case .chatMemberStatusCreator:
+                EmptyView()
+            case .chatMemberStatusAdministrator:
+                if session.canPromoteMembers(chat) {
+                    Button("Dismiss Admin", systemImage: "person.badge.minus") { runMemberAction { try await session.dismissAdmin(member.memberId, in: chat) } }
+                }
+            default:
+                if session.canPromoteMembers(chat) {
+                    Button("Make Admin", systemImage: "star") { runMemberAction { try await session.promote(member.memberId, in: chat) } }
+                }
+            }
+            if session.canRestrictMembers(chat), !isCreatorStatus(member.status) {
+                Button(chat.isChannel ? "Remove from Channel" : "Remove from Group", systemImage: "person.fill.xmark", role: .destructive) {
+                    runMemberAction { try await session.removeMember(member.memberId, from: chat) }
+                }
+            }
+        }
+    }
+
+    private func isCreatorStatus(_ status: ChatMemberStatus) -> Bool {
+        if case .chatMemberStatusCreator = status { return true }
+        return false
+    }
+
+    private func runMemberAction(_ action: @escaping () async throws -> Void) {
+        Task {
+            do {
+                try await action()
+            } catch {
+                main.showToast(error.telegramMessage)
+            }
+            await session.loadFullInfo(for: chat)
+            members = await session.members(of: chat)
+        }
     }
 
     // MARK: - Actions
