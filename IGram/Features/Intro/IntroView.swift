@@ -57,6 +57,8 @@ struct IntroView: View {
                 PhoneNumberStepView(model: model)
             case .authorizationStateWaitCode(let value):
                 CodeStepView(model: model, codeInfo: value.codeInfo)
+            case .authorizationStateWaitPassword(let value):
+                PasswordStepView(model: model, state: value)
             default:
                 ContentUnavailableView(
                     "Unsupported Step",

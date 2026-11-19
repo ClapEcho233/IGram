@@ -87,8 +87,30 @@ final class IntroModel {
 
     // MARK: - Password
 
+    /// True after a recovery code was sent to the recovery email address.
+    private(set) var isRecoveringPassword = false
+
     func submitPassword(_ password: String) async {
         await perform { try await self.api.checkAuthenticationPassword(password: password) }
+    }
+
+    func requestPasswordRecovery() async {
+        await perform {
+            try await self.api.requestAuthenticationPasswordRecovery()
+            self.isRecoveringPassword = true
+        }
+    }
+
+    /// Resets the password with the emailed recovery code. An empty new password removes it.
+    func recoverPassword(code: String, newPassword: String, hint: String) async {
+        await perform {
+            try await self.api.recoverAuthenticationPassword(newHint: hint, newPassword: newPassword, recoveryCode: code)
+        }
+    }
+
+    func cancelPasswordRecovery() {
+        isRecoveringPassword = false
+        errorMessage = nil
     }
 
     // MARK: - Registration
