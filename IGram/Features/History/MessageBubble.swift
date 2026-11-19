@@ -35,6 +35,11 @@ struct MessageBubble: View {
                     .padding(.top, 7)
             }
             content
+            if let reactions {
+                ReactionsView(message: entry.captionMessage, reactions: reactions, isOutgoingStyle: isOutgoingStyle)
+                    .padding(.horizontal, 10)
+                    .padding(.bottom, 7)
+            }
         }
         .background(ChatTheme.bubble(outgoing: isOutgoingStyle), in: shape)
         .clipShape(shape)
@@ -64,7 +69,17 @@ struct MessageBubble: View {
                 .overlay(alignment: .bottomTrailing) {
                     MessageFooter(message: message, chat: chat, isOutgoingStyle: isOutgoingStyle, overMedia: true)
                 }
+            if let reactions {
+                ReactionsView(message: message, reactions: reactions, isOutgoingStyle: isOutgoingStyle)
+                    .frame(maxWidth: 240, alignment: isOutgoingStyle ? .trailing : .leading)
+            }
         }
+    }
+
+    /// Reactions of the message carrying the caption (albums react as a whole).
+    private var reactions: [MessageReaction]? {
+        guard let list = entry.captionMessage.interactionInfo?.reactions?.reactions, !list.isEmpty else { return nil }
+        return list
     }
 
     @ViewBuilder

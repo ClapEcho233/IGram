@@ -42,6 +42,19 @@ struct MessageContextMenu: View {
     private var properties: MessageProperties? { history.properties[message.id] }
 
     var body: some View {
+        let quick = ReactionActions.quickReactions(for: chat)
+        if !quick.isEmpty, !message.isSending, !message.isFailed {
+            Menu("React", systemImage: "face.smiling") {
+                ForEach(quick, id: \.self) { emoji in
+                    let type = ReactionType.reactionTypeEmoji(ReactionTypeEmoji(emoji: emoji))
+                    let chosen = message.interactionInfo?.reactions?.reactions.contains { $0.type == type && $0.isChosen } ?? false
+                    Button(chosen ? "\(emoji) ✓" : emoji) {
+                        ReactionActions.toggle(type, isChosen: chosen, on: message, session: session)
+                    }
+                }
+            }
+            Divider()
+        }
         if message.isFailed {
             Button("Retry Sending", systemImage: "arrow.clockwise") {
                 run { _ = try await session.api.resendMessages(chatId: chat.id, messageIds: entry.messages.map(\.id), paidMessageStarCount: 0, quote: nil) }

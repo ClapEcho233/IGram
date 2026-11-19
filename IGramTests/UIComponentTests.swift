@@ -5,6 +5,7 @@
 
 import Foundation
 import Testing
+@preconcurrency import TDLibKit
 @testable import IGram
 
 @MainActor
@@ -36,5 +37,13 @@ struct LinkRouterTests {
         #expect(LinkRouter.telegramUsername(from: URL(string: "https://t.me/joinchat")!) == nil)
         #expect(LinkRouter.telegramUsername(from: URL(string: "https://t.me/durov/123")!) == nil)
         #expect(LinkRouter.telegramUsername(from: URL(string: "https://example.com/durov")!) == nil)
+    }
+}
+
+@MainActor
+struct ReactionTests {
+    @Test func symbols() {
+        #expect(ReactionActions.symbol(for: .reactionTypeEmoji(ReactionTypeEmoji(emoji: "🔥"))) == "🔥")
+        #expect(ReactionActions.symbol(for: .reactionTypePaid) == "⭐️")
     }
 }
