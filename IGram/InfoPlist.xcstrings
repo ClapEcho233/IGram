@@ -1,0 +1,16 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "NSMicrophoneUsageDescription" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "IGram 需要使用麦克风来录制语音消息。"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

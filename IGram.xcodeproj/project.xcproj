@@ -8,6 +8,7 @@
     "development": "en",
     "supported": [
       "Base",
+      "zh-Hans",
     ],
   },
   "packages": [
@@ -52,12 +53,12 @@
       ],
       "package-product-members": [
         {
-          "package": "lottie-spm",
-          "product-name": "Lottie",
-          "build-phase": { "build-phase": "frameworks" },
-        }, {
           "package": "TDLibKit",
           "product-name": "TDLibKit",
+          "build-phase": { "build-phase": "frameworks" },
+        }, {
+          "package": "lottie-spm",
+          "product-name": "Lottie",
           "build-phase": { "build-phase": "frameworks" },
         },
       ],
