@@ -25,6 +25,9 @@ struct SettingsView: View {
                     Tab("Appearance", systemImage: "paintbrush") {
                         AppearanceSettingsView()
                     }
+                    Tab("Privacy", systemImage: "hand.raised") {
+                        PrivacySettingsView()
+                    }
                     Tab("Sessions", systemImage: "laptopcomputer.and.iphone") {
                         SessionsSettingsView()
                     }

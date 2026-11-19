@@ -240,6 +240,13 @@ struct ChatInfoView: View {
     @ViewBuilder
     private var actions: some View {
         VStack(spacing: 8) {
+            if let userId = chat.userId, userId != session.myUserId {
+                let sender = MessageSender.messageSenderUser(MessageSenderUser(userId: userId))
+                Button(chat.blockList == nil ? "Block User" : "Unblock User", role: chat.blockList == nil ? .destructive : nil) {
+                    let list: BlockList? = chat.blockList == nil ? .blockListMain : nil
+                    Task { try? await session.api.setMessageSenderBlockList(blockList: list, senderId: sender) }
+                }
+            }
             if session.canLeave(chat) {
                 Button(chat.isChannel ? "Leave Channel" : "Leave Group", role: .destructive) {
                     pendingRemoval = ChatRemoval(chat: chat, kind: .leave)
