@@ -13,6 +13,8 @@ struct MainView: View {
     @State private var model = MainModel()
     @State private var audioPlayer = AudioPlayer()
     @State private var search = ChatSearchModel()
+    @State private var notifications = NotificationController()
+    @AppStorage(AppPreferences.badgeIncludesMuted) private var badgeIncludesMuted = false
 
     var body: some View {
         NavigationSplitView {
@@ -43,6 +45,9 @@ struct MainView: View {
         }
         .environment(model)
         .environment(audioPlayer)
+        .onAppear { notifications.attach(session: session, main: model) }
+        .onDisappear { notifications.detach() }
+        .onChange(of: badgeIncludesMuted) { notifications.updateBadge() }
         .quickLookPreview($model.quickLookURL)
         .environment(\.openURL, OpenURLAction { url in
             LinkRouter(session: session, main: model).handle(url)

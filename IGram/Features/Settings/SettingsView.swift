@@ -16,6 +16,9 @@ struct SettingsView: View {
                     Tab("Account", systemImage: "person.crop.circle") {
                         AccountSettingsView()
                     }
+                    Tab("Notifications", systemImage: "bell.badge") {
+                        NotificationSettingsView()
+                    }
                     Tab("Appearance", systemImage: "paintbrush") {
                         AppearanceSettingsView()
                     }
