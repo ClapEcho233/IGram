@@ -43,7 +43,7 @@ final class VoiceRecordingModel {
                 let snapshot = recorder.snapshot
                 self.seconds = snapshot.seconds
                 self.level = snapshot.level
-                if Date.now.timeIntervalSince(lastAction) > 5 {
+                if !ExtraFeatures.shared.dontSendTyping, Date.now.timeIntervalSince(lastAction) > 5 {
                     lastAction = .now
                     _ = try? await api.sendChatAction(action: .chatActionRecordingVoiceNote, businessConnectionId: nil, chatId: chatId, topicId: nil)
                 }

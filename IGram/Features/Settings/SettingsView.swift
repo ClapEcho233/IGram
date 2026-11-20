@@ -28,6 +28,9 @@ struct SettingsView: View {
                     Tab("Privacy", systemImage: "hand.raised") {
                         PrivacySettingsView()
                     }
+                    Tab("Enhancements", systemImage: "sparkles") {
+                        EnhancementsSettingsView()
+                    }
                     Tab("Sessions", systemImage: "laptopcomputer.and.iphone") {
                         SessionsSettingsView()
                     }
@@ -46,6 +49,6 @@ struct SettingsView: View {
                 ContentUnavailableView("Not Signed In", systemImage: "person.crop.circle.badge.questionmark", description: Text("Sign in to change your settings."))
             }
         }
-        .frame(width: 600, height: 520)
+        .frame(width: 660, height: 520)
     }
 }

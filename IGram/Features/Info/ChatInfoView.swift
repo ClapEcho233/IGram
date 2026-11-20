@@ -165,6 +165,12 @@ struct ChatInfoView: View {
         default:
             break
         }
+        if ExtraFeatures.shared.showIDs {
+            // The ID other clients and bots use: the user's for private
+            // chats, the chat's (with Bot API's -100 prefix) otherwise.
+            let id = chat.userId.map(String.init) ?? String(chat.id)
+            rows.append(DetailRow(label: String(localized: "ID"), value: id))
+        }
         return rows
     }
 

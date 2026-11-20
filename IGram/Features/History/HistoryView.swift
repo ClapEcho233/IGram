@@ -19,7 +19,6 @@ struct HistoryView: View {
 
     @Environment(TelegramSession.self) private var session: TelegramSession?
     @Environment(\.colorScheme) private var colorScheme
-    @AppStorage(AppPreferences.chatPreset) private var presetValue = ChatThemePreset.default.rawValue
     @State private var position = ScrollPosition(idType: String.self)
     @State private var scrollActivity = HistoryScrollActivity()
     @State private var isNearBottom = true
@@ -27,28 +26,19 @@ struct HistoryView: View {
 
     var body: some View {
         let entries = history.entries(lastReadInboxMessageId: unreadAnchor)
-        let sections = history.sections(lastReadInboxMessageId: unreadAnchor)
         ScrollView {
-            LazyVStack(spacing: 0, pinnedViews: .sectionHeaders) {
+            LazyVStack(spacing: 0) {
                 if history.didLoadInitial, history.hasMoreOlder {
                     pagingIndicator
                         .task(id: history.messages.first?.id) { await history.loadOlder() }
                 }
-                ForEach(sections) { section in
-                    Section {
-                        ForEach(section.entries) { entry in
-                            HistoryEntryView(
-                                entry: entry,
-                                chat: chat,
-                                history: history,
-                                highlightedMessageId: highlightedMessageId
-                            )
-                        }
-                    } header: {
-                        if let date = section.date {
-                            DayHeader(date: date)
-                        }
-                    }
+                ForEach(entries) { entry in
+                    HistoryEntryView(
+                        entry: entry,
+                        chat: chat,
+                        history: history,
+                        highlightedMessageId: highlightedMessageId
+                    )
                 }
                 if history.hasMoreNewer {
                     pagingIndicator
@@ -65,7 +55,14 @@ struct HistoryView: View {
         .onScrollPhaseChange { _, phase in
             scrollActivity.update(isScrolling: phase != .idle)
         }
-        .environment(scrollActivity)
+        .onScrollTargetVisibilityChange(idType: String.self, threshold: 0.2) { ids in
+            // Rows ascend by date, so the earliest visible day is the top one.
+            let day = ids.compactMap { history.day(ofRow: $0) }.min()
+            if day != scrollActivity.topDay { scrollActivity.topDay = day }
+        }
+        .overlay(alignment: .top) {
+            FloatingDayHeader(activity: scrollActivity)
+        }
         .onScrollGeometryChange(for: Bool.self) { geometry in
             geometry.contentSize.height - geometry.visibleRect.maxY < 160
         } action: { _, nearBottom in
@@ -109,7 +106,7 @@ struct HistoryView: View {
 
     private var resolvedThemeStyle: ChatThemeStyle {
         let isDark = colorScheme == .dark
-        let preset = ChatThemePreset(rawValue: presetValue) ?? .default
+        let preset = DisplayPreferences.shared.chatPreset
         let settings = session?.themes.themeSettings(for: chat, isDark: isDark)
         return ChatThemeStyle(preset: preset, settings: settings, isDark: isDark)
     }
@@ -183,28 +180,48 @@ struct HistoryView: View {
     }
 }
 
-/// Whether the history is scrolling. Animated stickers pause meanwhile, so
-/// their frames don't compete with scrolling for the main thread; only the
-/// stickers read this, so a scroll doesn't re-render the whole history.
+/// The day of the topmost visible message and whether the history is being
+/// scrolled, for the floating date pill. Only the pill reads it, so a scroll
+/// doesn't re-render the whole history.
+///
+/// SwiftUI's pinned section headers would do this for free, but in a
+/// bottom-anchored lazy stack they left long chats blank and made the history
+/// jump when the window became active.
 @Observable
 final class HistoryScrollActivity {
     private(set) var isScrolling = false
-    @ObservationIgnored private var resumeTask: Task<Void, Never>?
+    var topDay: Date?
+    @ObservationIgnored private var hideTask: Task<Void, Never>?
 
-    /// Pauses at once but resumes only after a short quiet period: a mouse
-    /// wheel reports idle between notches, and restarting stickers each time
-    /// costs more than it saves.
+    /// Shows the pill at once and keeps it a moment after scrolling stops,
+    /// like Telegram's floating date.
     func update(isScrolling scrolling: Bool) {
-        resumeTask?.cancel()
+        hideTask?.cancel()
         if scrolling {
             if !isScrolling { isScrolling = true }
             return
         }
-        resumeTask = Task { [weak self] in
-            try? await Task.sleep(for: .milliseconds(450))
+        hideTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(1))
             guard !Task.isCancelled else { return }
             self?.isScrolling = false
         }
+    }
+}
+
+/// The date of the messages at the top, floating while the history scrolls.
+private struct FloatingDayHeader: View {
+    let activity: HistoryScrollActivity
+
+    var body: some View {
+        ZStack {
+            if activity.isScrolling, let day = activity.topDay {
+                DayHeader(date: day)
+                    .transition(.opacity)
+                    .allowsHitTesting(false)
+            }
+        }
+        .animation(.easeOut(duration: 0.2), value: activity.isScrolling)
     }
 }
 

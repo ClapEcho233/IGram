@@ -42,19 +42,21 @@ final class HistoryModel {
     }
 
     @ObservationIgnored private let client: TelegramClient
+    @ObservationIgnored private let archive: MessageArchive?
     @ObservationIgnored private var requestedReplies: Set<Int64> = []
     @ObservationIgnored private var pendingViews: Set<Int64> = []
     @ObservationIgnored private var viewFlushTask: Task<Void, Never>?
     @ObservationIgnored private var isOpen = false
     @ObservationIgnored private var messagesVersion = 0
-    @ObservationIgnored private var cachedRows: (version: Int, anchor: Int64?, entries: [HistoryEntry], sections: [HistorySection])?
+    @ObservationIgnored private var cachedRows: (version: Int, anchor: Int64?, entries: [HistoryEntry], days: [String: Date])?
 
     static let pageSize = 50
 
-    init(chatId: Int64, topicId: Int? = nil, client: TelegramClient) {
+    init(chatId: Int64, topicId: Int? = nil, client: TelegramClient, archive: MessageArchive? = nil) {
         self.chatId = chatId
         self.topicId = topicId
         self.client = client
+        self.archive = archive
     }
 
     /// The rows to show, rebuilt only when the messages change: the history
@@ -63,19 +65,19 @@ final class HistoryModel {
         rows(lastReadInboxMessageId: lastReadInboxMessageId).entries
     }
 
-    /// The rows grouped by day, for pinned date headers.
-    func sections(lastReadInboxMessageId: Int64?) -> [HistorySection] {
-        rows(lastReadInboxMessageId: lastReadInboxMessageId).sections
+    /// The day a history row belongs to, for the floating date while scrolling.
+    func day(ofRow id: String) -> Date? {
+        cachedRows?.days[id]
     }
 
-    private func rows(lastReadInboxMessageId: Int64?) -> (entries: [HistoryEntry], sections: [HistorySection]) {
+    private func rows(lastReadInboxMessageId: Int64?) -> (entries: [HistoryEntry], days: [String: Date]) {
         if let cached = cachedRows, cached.version == messagesVersion, cached.anchor == lastReadInboxMessageId {
-            return (cached.entries, cached.sections)
+            return (cached.entries, cached.days)
         }
         let entries = HistoryLayout.entries(for: messages, lastReadInboxMessageId: lastReadInboxMessageId)
-        let sections = HistoryLayout.sections(from: entries)
-        cachedRows = (messagesVersion, lastReadInboxMessageId, entries, sections)
-        return (entries, sections)
+        let days = HistoryLayout.days(of: entries)
+        cachedRows = (messagesVersion, lastReadInboxMessageId, entries, days)
+        return (entries, days)
     }
 
     /// The topic as TDLib addresses it in requests and messages.
@@ -172,8 +174,10 @@ final class HistoryModel {
         let older = batch.filter { $0.id < oldest.id }
         if older.isEmpty {
             hasMoreOlder = false
+            messages = withKeptDeletions(messages, in: Int64.min...(oldest.id - 1))
         } else {
-            messages = Self.merge(messages, older)
+            let lowest = older.map(\.id).min() ?? oldest.id
+            messages = withKeptDeletions(Self.merge(messages, older), in: lowest...(oldest.id - 1))
         }
     }
 
@@ -185,14 +189,19 @@ final class HistoryModel {
         let newer = batch.filter { $0.id > newest.id }
         if newer.isEmpty {
             hasMoreNewer = false
+            messages = withKeptDeletions(messages, in: (newest.id + 1)...Int64.max)
         } else {
-            messages = Self.merge(messages, newer)
+            let highest = newer.map(\.id).max() ?? newest.id
+            messages = withKeptDeletions(Self.merge(messages, newer), in: (newest.id + 1)...highest)
         }
     }
 
     /// Replaces the loaded slice with `batch` (in any order).
     func setSlice(_ batch: [Message], hasMoreOlder: Bool, hasMoreNewer: Bool) {
-        messages = Self.merge([], batch)
+        let ids = batch.map(\.id)
+        let lower = hasMoreOlder ? (ids.min() ?? Int64.max) : Int64.min
+        let upper = hasMoreNewer ? (ids.max() ?? Int64.min) : Int64.max
+        messages = lower <= upper ? withKeptDeletions(Self.merge([], batch), in: lower...upper) : Self.merge([], batch)
         self.hasMoreOlder = hasMoreOlder
         self.hasMoreNewer = hasMoreNewer
         didLoadInitial = true
@@ -217,11 +226,26 @@ final class HistoryModel {
                     onlyLocal: false
                 )
             }
-            return result.messages ?? []
+            let messages = result.messages ?? []
+            archive?.remember(messages)
+            return messages
         } catch {
             Log.data.error("getChatHistory failed: \(error.telegramMessage, privacy: .public)")
             return nil
         }
+    }
+
+    /// Adds the messages kept after others deleted them that fall in `range`
+    /// of the loaded slice.
+    private func withKeptDeletions(_ messages: [ChatMessage], in range: ClosedRange<Int64>) -> [ChatMessage] {
+        guard let kept = archive?.deletedMessages(chatId: chatId, in: range, topic: messageTopic), !kept.isEmpty else {
+            return messages
+        }
+        var byId = Dictionary(messages.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        for message in kept where byId[message.id] == nil {
+            byId[message.id] = message
+        }
+        return byId.values.sorted { $0.id < $1.id }
     }
 
     /// Merges `incoming` into `existing`, de-duplicating by id and sorting ascending.
@@ -304,6 +328,8 @@ final class HistoryModel {
     private func flushViews() {
         viewFlushTask?.cancel()
         viewFlushTask = nil
+        // Ghost mode: the sender doesn't learn the messages were read.
+        if ExtraFeatures.shared.dontReadMessages { pendingViews.removeAll() }
         guard !pendingViews.isEmpty else { return }
         let ids = pendingViews.sorted()
         pendingViews.removeAll()
@@ -344,7 +370,9 @@ final class HistoryModel {
             mutate(value.messageId) { $0.markContentOpened() }
         case .updateDeleteMessages(let value):
             guard !value.fromCache else { break }
-            let ids = Set(value.messageIds)
+            // Messages the archive kept stay, marked as deleted.
+            let ids = Set(value.messageIds.filter { !(archive?.isDeleted(chatId: chatId, messageId: $0) ?? false) })
+            guard !ids.isEmpty else { break }
             messages.removeAll { ids.contains($0.id) }
         default:
             break

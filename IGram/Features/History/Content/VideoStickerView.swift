@@ -22,7 +22,6 @@ struct VideoStickerView<Placeholder: View>: View {
     @ViewBuilder var placeholder: Placeholder
 
     @Environment(TelegramSession.self) private var session
-    @Environment(HistoryScrollActivity.self) private var scrollActivity: HistoryScrollActivity?
     @State private var sink = StickerFrameSink()
     @State private var hasFrame = false
 
@@ -46,9 +45,6 @@ struct VideoStickerView<Placeholder: View>: View {
             }
             await play(url)
         }
-        .onChange(of: scrollActivity?.isScrolling ?? false, initial: true) { _, isScrolling in
-            sink.isPaused = isScrolling
-        }
     }
 
     private func play(_ url: URL) async {
@@ -61,12 +57,6 @@ struct VideoStickerView<Placeholder: View>: View {
         var deadline = clock.now
         var index = 0
         while !Task.isCancelled {
-            // Hold the current frame while the history scrolls.
-            if sink.isPaused, hasFrame {
-                do { try await Task.sleep(for: .milliseconds(120)) } catch { return }
-                deadline = clock.now
-                continue
-            }
             let current = index
             let rendered = await Task.detached(priority: .userInitiated) {
                 SendableImage(image: decoder.image(at: current))
@@ -94,7 +84,6 @@ struct VideoStickerView<Placeholder: View>: View {
 final class StickerFrameSink {
     fileprivate weak var layer: CALayer?
     fileprivate private(set) var lastFrame: CGImage?
-    var isPaused = false
 
     func show(_ image: CGImage) {
         lastFrame = image

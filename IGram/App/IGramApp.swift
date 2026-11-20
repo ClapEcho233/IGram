@@ -32,11 +32,7 @@ struct IGramApp: App {
         }
     }
 
-    @AppStorage(AppPreferences.colorScheme) private var colorSchemeValue = ColorSchemePreference.system.rawValue
-
-    private var colorScheme: ColorSchemePreference {
-        ColorSchemePreference(rawValue: colorSchemeValue) ?? .system
-    }
+    private var colorScheme: ColorSchemePreference { DisplayPreferences.shared.colorScheme }
 
     init() {
         AppPreferences.registerDefaults()
@@ -45,6 +41,10 @@ struct IGramApp: App {
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     weak var app: AppModel?
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        StreamerMode.start()
+    }
 
     func applicationWillTerminate(_ notification: Notification) {
         app?.prepareForTermination()

@@ -88,6 +88,9 @@ struct MessageContextMenu: View {
         if let text = message.text, !text.text.isEmpty {
             Button("Copy Text", systemImage: "doc.on.doc") { copy(text.text) }
         }
+        if ExtraFeatures.shared.showIDs {
+            Button("Copy Message ID", systemImage: "number") { copy(String(message.id >> 20)) }
+        }
         if properties?.canGetLink == true {
             Button("Copy Message Link", systemImage: "link") {
                 run {
@@ -211,11 +214,13 @@ extension View {
                 let ids = deletion.messages.map(\.id)
                 if deletion.canDeleteForEveryone {
                     Button(chat.userId != nil ? String(localized: "Delete for Me and \(session.title(of: chat))") : String(localized: "Delete for Everyone"), role: .destructive) {
+                        session.archive.expectDeletion(chatId: chat.id, messageIds: ids)
                         Task { try? await session.api.deleteMessages(chatId: chat.id, messageIds: ids, revoke: true) }
                     }
                 }
                 if deletion.canDeleteForSelf {
                     Button("Delete for Me", role: .destructive) {
+                        session.archive.expectDeletion(chatId: chat.id, messageIds: ids)
                         Task { try? await session.api.deleteMessages(chatId: chat.id, messageIds: ids, revoke: false) }
                     }
                 }

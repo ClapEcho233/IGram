@@ -389,6 +389,16 @@
         }
       }
     },
+    "%lld deleted, %lld edited" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld 条已删除，%2$lld 条有编辑"
+          }
+        }
+      }
+    },
     "%lld members" : {
       "localizations" : {
         "zh-Hans" : {
@@ -1405,6 +1415,16 @@
         }
       }
     },
+    "Clear" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清除"
+          }
+        }
+      }
+    },
     "Clear Cache" : {
       "localizations" : {
         "zh-Hans" : {
@@ -1425,12 +1445,32 @@
         }
       }
     },
+    "Clear Kept Messages…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清除保留的消息…"
+          }
+        }
+      }
+    },
     "Clear all cached media?" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "清除所有缓存的媒体？"
+          }
+        }
+      }
+    },
+    "Clear kept messages?" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清除保留的消息？"
           }
         }
       }
@@ -1635,6 +1675,16 @@
         }
       }
     },
+    "Copy Message ID" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "复制消息 ID"
+          }
+        }
+      }
+    },
     "Copy Message Link" : {
       "localizations" : {
         "zh-Hans" : {
@@ -1731,6 +1781,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "凭据来自环境变量 TG_API_ID 和 TG_API_HASH。"
+          }
+        }
+      }
+    },
+    "Current" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前"
           }
         }
       }
@@ -1985,6 +2045,16 @@
         }
       }
     },
+    "Deleted" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已删除"
+          }
+        }
+      }
+    },
     "Deleted Account" : {
       "localizations" : {
         "zh-Hans" : {
@@ -2001,6 +2071,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已删除的消息"
+          }
+        }
+      }
+    },
+    "Deleted messages and edit history kept for this account will be removed from this Mac." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此账号保留的已删除消息和编辑记录将从这台 Mac 上移除。"
           }
         }
       }
@@ -2041,6 +2121,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "程序坞标记"
+          }
+        }
+      }
+    },
+    "Don't Mark Stories as Viewed" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不将动态标为已看"
+          }
+        }
+      }
+    },
+    "Don't Send Read Receipts" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不发送已读回执"
+          }
+        }
+      }
+    },
+    "Don't Send Typing Status" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不发送“正在输入”状态"
           }
         }
       }
@@ -2145,6 +2255,16 @@
         }
       }
     },
+    "Edit History" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "编辑记录"
+          }
+        }
+      }
+    },
     "Edit Message" : {
       "localizations" : {
         "zh-Hans" : {
@@ -2181,6 +2301,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "表情、贴纸和 GIF"
+          }
+        }
+      }
+    },
+    "Enhancements" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "增强"
           }
         }
       }
@@ -2425,6 +2555,46 @@
         }
       }
     },
+    "Ghost Mode" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "幽灵模式"
+          }
+        }
+      }
+    },
+    "Ghost Mode Off" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "幽灵模式已关闭"
+          }
+        }
+      }
+    },
+    "Ghost Mode On" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "幽灵模式已开启"
+          }
+        }
+      }
+    },
+    "Ghost mode is on: no read receipts, online status, typing or story views" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "幽灵模式已开启：不发送已读回执、在线状态、输入状态和动态浏览记录"
+          }
+        }
+      }
+    },
     "Global Search" : {
       "localizations" : {
         "zh-Hans" : {
@@ -2498,6 +2668,16 @@
         }
       }
     },
+    "Hide Stories" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隐藏动态"
+          }
+        }
+      }
+    },
     "Hide bot keyboard" : {
       "localizations" : {
         "zh-Hans" : {
@@ -2518,6 +2698,16 @@
         }
       }
     },
+    "Hides IGram's windows from screen sharing, recordings and screenshots." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在屏幕共享、录屏和截图中隐藏 IGram 的窗口。"
+          }
+        }
+      }
+    },
     "Hint (optional)" : {
       "localizations" : {
         "zh-Hans" : {
@@ -2534,6 +2724,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "提示：%@"
+          }
+        }
+      }
+    },
+    "ID" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ID"
           }
         }
       }
@@ -2617,6 +2817,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "信息"
+          }
+        }
+      }
+    },
+    "Interface" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "界面"
           }
         }
       }
@@ -2727,6 +2937,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已发送加入申请"
+          }
+        }
+      }
+    },
+    "Keep Deleted Messages" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保留被删除的消息"
+          }
+        }
+      }
+    },
+    "Keep Edit History" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保留编辑记录"
+          }
+        }
+      }
+    },
+    "Kept" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已保留"
           }
         }
       }
@@ -3034,12 +3274,32 @@
         }
       }
     },
+    "Message History" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "消息记录"
+          }
+        }
+      }
+    },
     "Messages" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "消息"
+          }
+        }
+      }
+    },
+    "Messages others delete stay in the chat, marked as deleted. Click “edited” on a message to see its earlier versions. Only messages received or opened while IGram runs can be kept; they're saved on this Mac only." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "别人删除的消息会留在聊天中并标为“已删除”。点按消息上的“已编辑”可查看之前的版本。只能保留 IGram 运行期间收到或打开过的消息，且只保存在这台 Mac 上。"
           }
         }
       }
@@ -3654,6 +3914,16 @@
         }
       }
     },
+    "Others won't see that you read their messages, are online, are typing or watched their stories. The eye button above the chat list turns all of these on or off." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "对方不会看到你已读消息、在线、正在输入或看过他们的动态。聊天列表上方的眼睛按钮可一键开关以上全部选项。"
+          }
+        }
+      }
+    },
     "Outgoing call" : {
       "localizations" : {
         "zh-Hans" : {
@@ -4060,6 +4330,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已读"
+          }
+        }
+      }
+    },
+    "Read Chat After Sending a Message" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "发送消息后标为已读"
           }
         }
       }
@@ -4957,6 +5237,26 @@
         }
       }
     },
+    "Show Seconds in Message Times" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "消息时间显示秒"
+          }
+        }
+      }
+    },
+    "Show User, Chat and Message IDs" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "显示用户、聊天和消息 ID"
+          }
+        }
+      }
+    },
     "Show all topics as one message stream" : {
       "localizations" : {
         "zh-Hans" : {
@@ -4983,6 +5283,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "显示聊天信息"
+          }
+        }
+      }
+    },
+    "Show edit history" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查看编辑记录"
           }
         }
       }
@@ -5077,6 +5387,16 @@
         }
       }
     },
+    "Stay Offline" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保持离线"
+          }
+        }
+      }
+    },
     "Sticker" : {
       "localizations" : {
         "zh-Hans" : {
@@ -5163,6 +5483,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "动态不可用"
+          }
+        }
+      }
+    },
+    "Streamer Mode" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "主播模式"
           }
         }
       }
@@ -5546,6 +5876,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "关闭密码"
+          }
+        }
+      }
+    },
+    "Turn on ghost mode" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开启幽灵模式"
           }
         }
       }
@@ -6186,6 +6526,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在选择贴纸"
+          }
+        }
+      }
+    },
+    "deleted" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已删除"
           }
         }
       }

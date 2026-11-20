@@ -16,20 +16,27 @@ struct MessageFooter: View {
 
     @Environment(TelegramSession.self) private var session
     @Environment(\.chatThemeStyle) private var theme
+    @State private var isShowingEdits = false
 
     var body: some View {
         HStack(spacing: 3) {
+            if session.archive.isDeleted(chatId: message.chatId, messageId: message.id) {
+                // Kept by Enhancements ▸ Keep Deleted Messages, like AyuGram's mark.
+                Image(systemName: "trash")
+                    .help("Deleted")
+                Text("deleted")
+            }
             if let views = message.interactionInfo?.viewCount, views > 0, chat.isChannel {
                 Image(systemName: "eye")
                 Text(Self.compact(views))
             }
             if message.isEdited {
-                Text("edited")
+                editedLabel
             }
             if message.isPinned {
                 Image(systemName: "pin.fill")
             }
-            Text(DateFormatting().time(message.dateValue))
+            Text(DateFormatting().time(message.dateValue, seconds: ExtraFeatures.shared.showSeconds))
             if message.isOutgoing, !chat.isChannel, !session.isSavedMessages(chat) {
                 deliveryIcon
             }
@@ -45,6 +52,27 @@ struct MessageFooter: View {
         .fixedSize()
     }
 
+    /// "edited", which shows the earlier versions when the archive kept any.
+    @ViewBuilder
+    private var editedLabel: some View {
+        let versions = session.archive.edits(chatId: message.chatId, messageId: message.id)
+        if versions.isEmpty {
+            Text("edited")
+        } else {
+            Button {
+                isShowingEdits = true
+            } label: {
+                Text("edited")
+                    .underline()
+            }
+            .buttonStyle(.plain)
+            .help("Show edit history")
+            .popover(isPresented: $isShowingEdits, arrowEdge: .bottom) {
+                EditHistoryView(versions: versions, current: message.text?.text ?? "", editDate: message.editDate)
+            }
+        }
+    }
+
     @ViewBuilder
     private var deliveryIcon: some View {
         if message.isFailed {
@@ -58,12 +86,13 @@ struct MessageFooter: View {
 
     /// Invisible text reserving room for the footer at the end of the last line,
     /// so short messages keep the time on the same line like tdesktop.
-    static func placeholder(for message: ChatMessage, chat: ChatItem) -> String {
+    static func placeholder(for message: ChatMessage, chat: ChatItem, isDeleted: Bool = false, seconds: Bool = false) -> String {
         var parts: [String] = []
+        if isDeleted { parts.append("🗑 " + String(localized: "deleted")) }
         if chat.isChannel, let views = message.interactionInfo?.viewCount, views > 0 { parts.append("👁 \(compact(views))") }
         if message.isEdited { parts.append(String(localized: "edited")) }
         if message.isPinned { parts.append("📌") }
-        parts.append(DateFormatting().time(message.dateValue))
+        parts.append(DateFormatting().time(message.dateValue, seconds: seconds))
         if message.isOutgoing, !chat.isChannel { parts.append("✓✓") }
         return "\u{2003}" + parts.joined(separator: " ")
     }
@@ -87,5 +116,45 @@ struct DeliveryChecks: View {
         .fontWeight(.semibold)
         .accessibilityElement()
         .accessibilityLabel(isRead ? Text("Read") : Text("Sent"))
+    }
+}
+
+/// Earlier versions of an edited message, newest first, under the current text.
+private struct EditHistoryView: View {
+    let versions: [MessageArchive.Edit]
+    let current: String
+    let editDate: Int
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Edit History")
+                .font(.headline)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    version(current, date: editDate, isCurrent: true)
+                    ForEach(versions.reversed()) { edit in
+                        Divider()
+                        version(edit.text, date: edit.date, isCurrent: false)
+                    }
+                }
+            }
+            .frame(maxHeight: 320)
+        }
+        .padding(14)
+        .frame(width: 320)
+    }
+
+    private func version(_ text: String, date: Int, isCurrent: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            HStack {
+                Text(isCurrent ? String(localized: "Current") : DateFormatting().dateTime(Date(timeIntervalSince1970: TimeInterval(date))))
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(isCurrent ? AnyShapeStyle(.tint) : AnyShapeStyle(.secondary))
+                Spacer()
+            }
+            Text(text.isEmpty ? " " : text)
+                .textSelection(.enabled)
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 }

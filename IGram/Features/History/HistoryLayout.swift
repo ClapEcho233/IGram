@@ -23,18 +23,6 @@ enum HistoryEntry: Identifiable, Equatable {
     }
 }
 
-/// One day of history. Its date header stays pinned to the top while the day
-/// scrolls by, like tdesktop's floating date.
-struct HistorySection: Identifiable, Equatable {
-    /// The start of the day, or `nil` for rows before the first date.
-    let date: Date?
-    var entries: [HistoryEntry]
-
-    var id: String {
-        date.map { "section-\(Int($0.timeIntervalSince1970))" } ?? "section-undated"
-    }
-}
-
 /// A message, or several messages of one album, rendered as a single bubble.
 struct MessageEntry: Equatable {
     var messages: [ChatMessage]
@@ -69,20 +57,15 @@ enum HistoryLayout {
 
     static func messageRowId(_ messageId: Int64) -> String { "message-\(messageId)" }
 
-    /// Splits rows into days at each day header; the headers become the
-    /// sections' dates.
-    static func sections(from entries: [HistoryEntry]) -> [HistorySection] {
-        var sections: [HistorySection] = []
+    /// The day each row falls on, keyed by row id, following the day headers.
+    static func days(of entries: [HistoryEntry]) -> [String: Date] {
+        var days: [String: Date] = [:]
+        var current: Date?
         for entry in entries {
-            if case .day(let date) = entry {
-                sections.append(HistorySection(date: date, entries: []))
-            } else if sections.isEmpty {
-                sections.append(HistorySection(date: nil, entries: [entry]))
-            } else {
-                sections[sections.count - 1].entries.append(entry)
-            }
+            if case .day(let date) = entry { current = date }
+            if let current { days[entry.id] = current }
         }
-        return sections
+        return days
     }
 
     /// - Parameters:

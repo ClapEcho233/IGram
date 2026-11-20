@@ -135,6 +135,7 @@ struct EditChatSheet: View {
         .confirmationDialog(chat.isChannel ? "Delete this channel for everyone?" : "Delete this group for everyone?", isPresented: $isConfirmingDelete) {
             Button("Delete", role: .destructive) {
                 Task {
+                    session.archive.expectHistoryCleared(chatId: chat.id)
                     _ = try? await session.api.deleteChat(chatId: chat.id)
                     dismiss()
                 }

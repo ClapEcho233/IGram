@@ -66,6 +66,7 @@ extension TelegramSession {
 
     /// Clears the history for the current user and removes the chat from the list.
     func deleteChat(_ chat: ChatItem, forEveryone: Bool = false) async throws {
+        archive.expectHistoryCleared(chatId: chat.id)
         if chat.isSecret, case .chatTypeSecret(let secret) = chat.type {
             try await api.closeSecretChat(secretChatId: secret.secretChatId)
         }

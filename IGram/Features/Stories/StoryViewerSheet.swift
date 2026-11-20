@@ -528,6 +528,8 @@ struct StoryViewerSheet: View {
         isLoadingStory = false
         let key = StoryStore.StoryKey(posterChatId: chatId, storyId: storyId)
         openedStory = key
+        // Ghost mode: opening a story would add the user to its viewers.
+        guard !ExtraFeatures.shared.dontReadStories else { return }
         _ = try? await session.api.openStory(storyId: storyId, storyPosterChatId: chatId)
     }
 

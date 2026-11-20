@@ -3,6 +3,7 @@
 //  IGram
 //
 
+import AppKit
 import Foundation
 import Observation
 import OSLog
@@ -58,7 +59,32 @@ final class AppModel {
         }
         if !Self.isRunningTests {
             accountIndices.forEach(start)
+            observeOnlineStatus()
         }
+    }
+
+    // MARK: - Online status
+
+    /// Online while IGram is the active app, unless ghost mode keeps the
+    /// accounts offline.
+    private var isOnline: Bool {
+        NSApplication.shared.isActive && !ExtraFeatures.shared.stayOffline
+    }
+
+    @ObservationIgnored private var onlineObservers: [any NSObjectProtocol] = []
+
+    private func observeOnlineStatus() {
+        let center = NotificationCenter.default
+        for name in [NSApplication.didBecomeActiveNotification, NSApplication.didResignActiveNotification, ExtraFeatures.didChangeNotification] {
+            onlineObservers.append(center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.updateOnlineStatus() }
+            })
+        }
+    }
+
+    private func updateOnlineStatus() {
+        let isOnline = isOnline
+        sessions.values.forEach { $0.setOnline(isOnline) }
     }
 
     /// The session of the account shown in the window.
@@ -129,6 +155,10 @@ final class AppModel {
         session.onClosed = { [weak self, weak session] in
             guard let self, let session else { return }
             self.sessionDidClose(session, index: index)
+        }
+        session.onReady = { [weak self, weak session] in
+            guard let self, let session else { return }
+            session.setOnline(self.isOnline)
         }
         sessions[index] = session
         session.start()

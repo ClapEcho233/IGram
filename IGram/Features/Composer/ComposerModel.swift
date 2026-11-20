@@ -221,7 +221,7 @@ final class ComposerModel {
     /// Sends arbitrary content, replying to the current reply target if any.
     func send(_ content: InputMessageContent, replyTo: ChatMessage? = nil, options: SendOptions = .standard) async throws {
         let reply = (replyTo ?? replyTarget).map(Self.replyReference)
-        _ = try await session.api.sendMessage(
+        let sent = try await session.api.sendMessage(
             chatId: chatId,
             inputMessageContent: content,
             options: options.messageSendOptions,
@@ -230,12 +230,25 @@ final class ComposerModel {
             topicId: topic
         )
         if case .reply = mode { mode = .compose }
+        readAfterSending(sent)
+    }
+
+    /// Ghost mode hides reading, but replying shows you're there anyway, so
+    /// AyuGram reads the chat once you send something.
+    private func readAfterSending(_ sent: Message) {
+        let features = ExtraFeatures.shared
+        guard features.dontReadMessages, features.readOnSend else { return }
+        let api = session.api
+        let chatId = chatId
+        Task {
+            _ = try? await api.viewMessages(chatId: chatId, forceRead: true, messageIds: [sent.id], source: .messageSourceChatHistory)
+        }
     }
 
     /// Sends several items as one album.
     func sendAlbum(_ contents: [InputMessageContent], options: SendOptions = .standard) async throws {
         let reply = replyTarget.map(Self.replyReference)
-        _ = try await session.api.sendMessageAlbum(
+        let sent = try await session.api.sendMessageAlbum(
             chatId: chatId,
             inputMessageContents: contents,
             options: options.messageSendOptions,
@@ -243,6 +256,7 @@ final class ComposerModel {
             topicId: topic
         )
         if case .reply = mode { mode = .compose }
+        if let last = sent.messages?.last { readAfterSending(last) }
     }
 
     /// The message being replied to, if the composer is in reply mode.
@@ -305,7 +319,7 @@ final class ComposerModel {
     private func textDidChange() {
         guard !isRestoringDraft else { return }
         if case .edit = mode { return }
-        if !text.isEmpty, Date.now.timeIntervalSince(lastTypingSent) > 5 {
+        if !text.isEmpty, !ExtraFeatures.shared.dontSendTyping, Date.now.timeIntervalSince(lastTypingSent) > 5 {
             lastTypingSent = .now
             let chatId = chatId
             let api = session.api

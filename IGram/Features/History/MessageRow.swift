@@ -180,9 +180,9 @@ struct ServiceCapsule: View {
     }
 }
 
-/// The date above a day of messages, pinned to the top while that day
-/// scrolls by: a glass pill on the plain Messages background, tdesktop's
-/// translucent capsule over a wallpaper.
+/// The date above a day of messages, also floated over the top of the
+/// history while scrolling: a glass pill on the plain Messages background,
+/// tdesktop's translucent capsule over a wallpaper.
 struct DayHeader: View {
     let date: Date
 

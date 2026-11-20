@@ -76,20 +76,19 @@ struct AnimatedStickerView<Placeholder: View>: View {
     @ViewBuilder var placeholder: Placeholder
 
     @Environment(TelegramSession.self) private var session
-    @Environment(HistoryScrollActivity.self) private var scrollActivity: HistoryScrollActivity?
     @State private var animation: LottieAnimation?
-    /// Set once the Lottie view exists. Building one is expensive, so a
-    /// sticker scrolled into view keeps its thumbnail until scrolling stops.
-    @State private var isActivated = false
 
     var body: some View {
         let item = session.files.item(for: file)
         ZStack {
-            if let animation, isActivated || scrollActivity?.isScrolling != true {
+            if let animation {
+                // Keeps looping while the app is inactive: Lottie's default
+                // pause-and-restore rebuilt every sticker's animations when
+                // the window came back, so they flashed and jumped.
                 LottieView(animation: animation)
                     .resizable()
-                    .playbackMode(playbackMode)
-                    .onAppear { isActivated = true }
+                    .backgroundBehavior(.continuePlaying)
+                    .looping()
             } else {
                 placeholder
             }
@@ -104,14 +103,5 @@ struct AnimatedStickerView<Placeholder: View>: View {
                 animation = await TGSDecoder.load(url)
             }
         }
-    }
-
-    /// Loops, but holds the current frame while the history scrolls: many
-    /// stickers fall back to Lottie's main-thread renderer.
-    private var playbackMode: LottiePlaybackMode {
-        if scrollActivity?.isScrolling == true {
-            return .paused(at: .currentFrame)
-        }
-        return .playing(.fromProgress(nil, toProgress: 1, loopMode: .loop))
     }
 }

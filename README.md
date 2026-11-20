@@ -98,7 +98,14 @@ xcodebuild -project IGram.xcodeproj -scheme IGram -destination 'platform=macOS' 
   management, folder editor, forum topics, privacy and two-step verification,
   proxies, full `t.me`/`tg://` deep link routing (including invite links and
   message links), up to three accounts with cross-account notifications and
-  Dock badge, and Simplified Chinese (656 strings)
+  Dock badge, and Simplified Chinese (691 strings)
+
+- Enhancements, after AyuGram: ghost mode (no read receipts, online status,
+  typing or story views, with a one-click toggle above the chat list and an
+  option to read a chat once you reply), keeping messages others delete and
+  the earlier versions of edited messages (saved locally per account),
+  seconds in message times, user/chat/message IDs, hiding stories, and
+  streamer mode that hides IGram's windows from screen sharing
 
 ## Not yet implemented
 

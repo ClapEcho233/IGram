@@ -35,9 +35,13 @@ final class TelegramSession {
     let folders = ChatFolderStore()
     let themes = ThemeStore()
     let stories = StoryStore()
+    /// Deleted messages and edit history kept by the Enhancements settings.
+    let archive: MessageArchive
 
     /// Invoked once after TDLib reports `authorizationStateClosed`.
     @ObservationIgnored var onClosed: (() -> Void)?
+    /// Invoked each time the account becomes signed in and usable.
+    @ObservationIgnored var onReady: (() -> Void)?
     /// Observers that see every update after the stores applied it.
     @ObservationIgnored private var updateObservers: [UUID: (Update) -> Void] = [:]
     @ObservationIgnored private var updatesTask: Task<Void, Never>?
@@ -66,6 +70,8 @@ final class TelegramSession {
         self.client = client
         files = FileStore(client: client)
         chats = ChatStore(client: client)
+        let directory = try? TDLibEnvironment.current(accountIndex: accountIndex).databaseDirectory.deletingLastPathComponent()
+        archive = MessageArchive(directory: directory)
     }
 
     /// Starts consuming TDLib updates. TDLib begins by asking for parameters.
@@ -104,7 +110,7 @@ final class TelegramSession {
     func history(for chatId: Int64, topicId: Int? = nil) -> HistoryModel {
         let key = HistoryKey(chatId: chatId, topicId: topicId)
         if let model = histories[key]?.model { return model }
-        let model = HistoryModel(chatId: chatId, topicId: topicId, client: client)
+        let model = HistoryModel(chatId: chatId, topicId: topicId, client: client, archive: archive)
         histories = histories.filter { $0.value.model != nil }
         histories[key] = WeakHistory(model: model)
         return model
@@ -125,6 +131,8 @@ final class TelegramSession {
     // MARK: - Update routing
 
     func handle(_ update: Update) {
+        // Before the histories, so a kept deletion is known when they see it.
+        archive.handle(update)
         if let chatId = update.messageChatId {
             for (key, entry) in histories where key.chatId == chatId {
                 entry.model?.handle(update)
@@ -152,6 +160,7 @@ final class TelegramSession {
             Task { await sendParameters() }
         case .authorizationStateReady:
             Log.session.info("Authorized")
+            onReady?()
         case .authorizationStateLoggingOut:
             didLogOut = true
         case .authorizationStateClosed:
@@ -203,5 +212,17 @@ final class TelegramSession {
         isClosed = true
         updatesTask = nil
         onClosed?()
+    }
+}
+
+extension TelegramSession {
+    /// Tells Telegram whether the user is online, as official clients do
+    /// while their window is active.
+    func setOnline(_ isOnline: Bool) {
+        guard isAuthorized else { return }
+        let api = api
+        Task {
+            _ = try? await api.setOption(name: "online", value: .optionValueBoolean(OptionValueBoolean(value: isOnline)))
+        }
     }
 }

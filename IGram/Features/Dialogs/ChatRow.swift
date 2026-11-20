@@ -15,7 +15,7 @@ struct ChatRow: View {
     @Environment(MainModel.self) private var main
 
     var body: some View {
-        let ring = session.stories.ringState(for: chat.id)
+        let ring = ExtraFeatures.shared.hideStories ? .none : session.stories.ringState(for: chat.id)
         HStack(spacing: 10) {
             ZStack {
                 AvatarView(

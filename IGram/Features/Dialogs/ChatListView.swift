@@ -52,7 +52,8 @@ struct ChatListView: View {
     }
 
     private var storyList: StoryList? {
-        switch chatList {
+        if ExtraFeatures.shared.hideStories { return nil }
+        return switch chatList {
         case .chatListMain: .storyListMain
         case .chatListArchive: .storyListArchive
         case .chatListFolder: nil

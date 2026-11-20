@@ -14,8 +14,14 @@ struct DateFormatting {
 
     private var timeZone: TimeZone { calendar.timeZone }
 
-    func time(_ date: Date) -> String {
-        date.formatted(Date.FormatStyle(date: .omitted, time: .shortened, locale: locale, calendar: calendar, timeZone: timeZone))
+    /// The time of day; with `seconds` (Enhancements ▸ Show Seconds) down to the second.
+    func time(_ date: Date, seconds: Bool = false) -> String {
+        date.formatted(Date.FormatStyle(date: .omitted, time: seconds ? .standard : .shortened, locale: locale, calendar: calendar, timeZone: timeZone))
+    }
+
+    /// Date and time, for the versions in a message's edit history.
+    func dateTime(_ date: Date) -> String {
+        date.formatted(Date.FormatStyle(date: .abbreviated, time: .shortened, locale: locale, calendar: calendar, timeZone: timeZone))
     }
 
     /// Chat list timestamp: time today, weekday this week, otherwise the date.

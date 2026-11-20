@@ -16,12 +16,12 @@ struct ChatBackgroundView: View {
 
     @Environment(TelegramSession.self) private var session: TelegramSession?
     @Environment(\.colorScheme) private var colorScheme
-    @AppStorage(AppPreferences.chatPreset) private var presetValue = ChatThemePreset.default.rawValue
-    @AppStorage(AppPreferences.customWallpaperPath) private var customWallpaperPath = ""
-    @AppStorage(AppPreferences.customWallpaperBlurred) private var customWallpaperBlurred = false
 
+    private var preferences: DisplayPreferences { .shared }
     private var isDark: Bool { colorScheme == .dark }
-    private var preset: ChatThemePreset { ChatThemePreset(rawValue: presetValue) ?? .default }
+    private var preset: ChatThemePreset { preferences.chatPreset }
+    private var customWallpaperPath: String { preferences.customWallpaperPath }
+    private var customWallpaperBlurred: Bool { preferences.customWallpaperBlurred }
 
     var body: some View {
         ZStack {
@@ -302,11 +302,10 @@ struct ChatThemePickerSheet: View {
     @Environment(MainModel.self) private var main
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dismiss) private var dismiss
-    @AppStorage(AppPreferences.chatPreset) private var presetValue = ChatThemePreset.default.rawValue
     @State private var isApplying = false
 
     private var isDark: Bool { colorScheme == .dark }
-    private var preset: ChatThemePreset { ChatThemePreset(rawValue: presetValue) ?? .default }
+    private var preset: ChatThemePreset { DisplayPreferences.shared.chatPreset }
 
     private var selectedEmojiName: String? {
         if case .chatThemeEmoji(let value) = chat.theme { return value.name }

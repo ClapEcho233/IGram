@@ -15,7 +15,6 @@ struct MainView: View {
     @State private var search = ChatSearchModel()
     @Environment(AppModel.self) private var app
     @State private var navigation: ChatNavigation?
-    @AppStorage(AppPreferences.badgeIncludesMuted) private var badgeIncludesMuted = false
 
     var body: some View {
         NavigationSplitView {
@@ -41,6 +40,9 @@ struct MainView: View {
             }
             .scrollEdgeEffectStyle(.hard, for: .bottom)
             .toolbar {
+                ToolbarItem {
+                    GhostModeButton()
+                }
                 ToolbarItem {
                     Menu {
                         Button("New Message", systemImage: "square.and.pencil") { model.newChat = .message }
@@ -113,7 +115,7 @@ struct MainView: View {
             if let navigation, app.navigation === navigation { app.navigation = nil }
         }
         .onChange(of: app.pendingOpen) { openPendingNotification() }
-        .onChange(of: badgeIncludesMuted) { app.notifications.updateBadge() }
+        .onChange(of: DisplayPreferences.shared.badgeIncludesMuted) { app.notifications.updateBadge() }
         .quickLookPreview($model.quickLookURL)
         .sheet(isPresented: Binding(get: { model.proxyToAdd != nil }, set: { if !$0 { model.proxyToAdd = nil } })) {
             if let draft = model.proxyToAdd {
@@ -201,5 +203,22 @@ private struct ChatListSearchField: View {
                 .keyboardShortcut("f", modifiers: [.command, .option])
                 .hidden()
         }
+    }
+}
+
+/// AyuGram's ghost toggle: one click turns every ghost mode option on or off,
+/// and the tinted icon shows when any is on.
+private struct GhostModeButton: View {
+    private var features: ExtraFeatures { .shared }
+
+    var body: some View {
+        let isActive = features.isGhostModeActive
+        Button {
+            features.setGhostMode(!isActive)
+        } label: {
+            Label(isActive ? "Ghost Mode On" : "Ghost Mode Off", systemImage: isActive ? "eye.slash.fill" : "eye")
+                .foregroundStyle(isActive ? AnyShapeStyle(.tint) : AnyShapeStyle(.primary))
+        }
+        .help(isActive ? "Ghost mode is on: no read receipts, online status, typing or story views" : "Turn on ghost mode")
     }
 }

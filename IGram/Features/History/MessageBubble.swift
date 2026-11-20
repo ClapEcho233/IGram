@@ -341,7 +341,13 @@ struct MessageBubble: View {
 
     /// Text with the footer tucked into the end of the last line.
     func textBlock(_ text: FormattedText) -> some View {
-        let placeholder = Text(MessageFooter.placeholder(for: entry.captionMessage, chat: chat))
+        let footerMessage = entry.captionMessage
+        let placeholder = Text(MessageFooter.placeholder(
+            for: footerMessage,
+            chat: chat,
+            isDeleted: session.archive.isDeleted(chatId: footerMessage.chatId, messageId: footerMessage.id),
+            seconds: ExtraFeatures.shared.showSeconds
+        ))
             .font(.caption2)
             .foregroundStyle(.clear)
         return Text("\(Text(text.attributedString(linkColor: theme.accent(outgoing: isOutgoingStyle))))\(placeholder)")
